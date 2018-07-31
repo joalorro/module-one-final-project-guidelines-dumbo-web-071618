@@ -4,7 +4,7 @@ class Hero < ActiveRecord::Base
   has_many :inventorys
 
   has_many :fights
-  has_many :enemys, through: :fights
+  has_many :enemies, through: :fights
   # attr_accessor :name, :ap, :dp, :exp, :lvl, :inventory, :money
 
   ## INSTANCE METHODS ##
@@ -24,20 +24,21 @@ class Hero < ActiveRecord::Base
   end
 
   def fight
-    hero_fp = ((2.0/3.0)*@ap.to_f + (1.0/3.0)*@dp.to_f).to_i
-    enemy_fp = (rand(50..120)/100) * self.fp
-
-    enemy = Enemy.new name:
-    fight = Fight.create hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp
-
+    hero_fp = ((2.0/3.0)*self.ap.to_f + (1.0/3.0)*self.dp.to_f).round(2)
+    enemy_fp = ((rand(50..120)/100.0) * hero_fp).round(2)
+    last_enemy_id = (Enemy.all[-1]).id
+    enemy = Enemy.find(rand(1..last_enemy_id))
+    fight = Fight.create(hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp)
     winning_chance = (hero_fp/(hero_fp + fight.fp)) * 100
     losing_chance = 100 - winning_chance
     random_number = rand(1..100)
 
     if winning_chance >= random_number
       #then win
+      puts "You win"
     else
       #lose
+      puts "You lose"
     end
 
   end

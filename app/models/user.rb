@@ -1,5 +1,5 @@
 class User < ActiveRecord::Base
-  has_one :hero
+  has_many :heros
 
   
 end

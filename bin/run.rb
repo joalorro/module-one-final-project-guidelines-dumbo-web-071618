@@ -1,23 +1,18 @@
 require_relative '../config/environment'
-
 # binding.pry
-
-#welcome message
-puts "Please enter your name:"
-name = gets.chomp
-if User.find_by(name: name)
-  ## Direct user to their hero & their hero menu
-  puts "hi #{name}"
-else
-  ## Direct user to create a new hero
-  puts "We don't have your name on profile, so we will create one for you!"
-
-  #call Hero.create to make a new hero
-  puts "What would you like to name your hero?"
-  hero_name = gets.chomp
-  Hero.create name: hero_name, user_id: (User.create(name: name)).id
+# First menu with welcome message
+i = Menu.main
+# Move on to the next menu
+case i
+  when "login"
+    Menu.login
+  when "signup"
+    Menu.signup
+  when "exit"
+    Menu.exit
 end
-# Next Menu with options: #
+
+
 ## Fight random enemy
 ## Look into your inventory
 ## Look at shop
@@ -33,10 +28,3 @@ end
     ## if win --> give player exp & money
     ## if lose --> give player less exp & no money
 ## when fight is finished, call on #level_up to see if exp return to hero's menu
-
-
-
-end
-
-binding.pry
-puts "HELLO WORLD"
