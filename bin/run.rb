@@ -7,7 +7,11 @@ case i
   when "login"
     Menu.login
   when "signup"
-    Menu.signup
+    puts "Please enter your new username"
+    name = gets.chomp
+    Menu.signup name
+    user = User.all.last
+    Menu.playing user
   when "exit"
     Menu.exit
 end

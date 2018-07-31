@@ -30,6 +30,7 @@ module Menu
         hero_name = gets.chomp
         User.create(name: name)
         Hero.create name: hero_name, user_id: (User.find_by(name: name)).id
+        
     end
 
     def self.playing(user)
@@ -41,6 +42,39 @@ module Menu
         case i
             when "fight"
                 (user.heros[0]).fight
+                Menu.playing user
+            when "inventory"
+                
+            when "shop"
+
+            when "exit"
+
         end
     end
+
+    def self.inventory user 
+        prompt = TTY::Prompt.new
+        i = prompt.select("Your Inventory:") do |menu|
+            menu.choices Weapons: "weapons", Shields: "shields", Helmets: "helmets", Armor: "armor", Boots: "boots", Gauntlets: "gauntlets", Back: "back"
+        case i
+            when "weapons"
+
+            when "shields"
+
+            when "helmets"
+
+            when "armor"
+            
+            when "boots"
+
+            when "gauntlets"
+
+            when "back"
+
+        end 
+            
+        else
+            
+        end
+    end 
 end

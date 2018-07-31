@@ -1,4 +1,4 @@
 class Item < ActiveRecord::Base
-  has_many :inventorys
-  has_many :heros, through: :inventorys
+  has_many :inventories
+  has_many :heros, through: :inventories
 end
