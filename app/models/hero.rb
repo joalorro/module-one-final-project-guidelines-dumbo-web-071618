@@ -33,6 +33,8 @@ class Hero < ActiveRecord::Base
     losing_chance = 100 - winning_chance
     random_number = rand(1..100)
 
+    puts `clear`
+
     puts "You encounter a #{enemy.species} with the power of #{enemy_fp}."
     puts "Your chances of winning are #{winning_chance.round(1)}%."
     puts "Godspeed."
