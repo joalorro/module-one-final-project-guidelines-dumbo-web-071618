@@ -52,6 +52,20 @@ class Hero < ActiveRecord::Base
     fight.save
   end
 
+  def equipped_items #######NOT TESTED#############
+    hero.items.select do |item|
+      item.inventory.equip == true
+    end
+  end
+
+  def buy_item
+
+  end
+
+  def equip_item
+
+  end
+
   ## CLASS METHODS ##
 
   ## PRIVATE METHODS ##

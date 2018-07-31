@@ -103,15 +103,16 @@ module Menu
     end
 
     def self.inv_actions(hero, inv_arr)
-        binding.pry
+        # binding.pry
         i = TTY::Prompt.new.select("Your inventory") do |menu|
             menu.choices Equip: "equip", Unequip: "unequip", Back: "back"
         end
 
 
+
         case i 
             when "equip"
-                inv_arr
+                
             when "unequip"
  
             when "back"
