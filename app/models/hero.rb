@@ -212,6 +212,7 @@ class Hero < ActiveRecord::Base
 
     self.inventories.delete inv_instance
     self.money += item.price
+    self.save
   end
 
   def view_inventory_for_selling
