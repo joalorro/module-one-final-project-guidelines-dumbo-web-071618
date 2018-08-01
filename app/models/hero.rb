@@ -53,15 +53,21 @@ class Hero < ActiveRecord::Base
   end
 
   def view_items
-    puts `clear`
+    # puts `clear`
     if !self.inventories.empty?
-      hero.generate_items_array
+      selection = self.generate_items_array
+      selection == "back" ? play_menu(self) : inv_actions(selection)
+
     else
       TTY::Prompt.new.select("It seems your inventory is empty") do |menu|
         menu.choices Back: "back"
       end
       play_menu self
     end
+  end
+
+  def sell
+
   end
 
   def generate_items_array
@@ -79,10 +85,12 @@ class Hero < ActiveRecord::Base
         hashe["#{v[:count]} #{k.to_s}(s)".to_sym] = [v[:inv].item, v[:count]]
     end
 
+    hashe[:Back] = "back"
     item_arr = TTY::Prompt.new.select("Your inventory") do |menu|
         menu.choices hashe
     end
-    inv_actions item_arr
+
+    item_arr
   end
 
   def inv_actions inv_arr
@@ -115,7 +123,7 @@ class Hero < ActiveRecord::Base
       when "buy"
         item_type
       when "sell"
-
+        view_inventory_for_selling
       when "view"
         show_shop_items
       when "back"
@@ -131,7 +139,7 @@ class Hero < ActiveRecord::Base
 
 
   def equipped_items #######NOT TESTED#############
-    hero.items.select do |item|
+    self.items.select do |item|
       item.inventory.equip == true
     end
   end
@@ -161,7 +169,7 @@ class Hero < ActiveRecord::Base
       choice = prompt.select("What would you like to purchase?") do |menu|
           menu.choices Swords: "sword", Shields: "shield", Armor: "armor", Boots: "boots", Gauntlets: "gauntlets", Helmets: "helmet", Back: "back"
       end
-      shop hero if choice == "back"
+      shop if choice == "back"
       material_menu choice
   end
 
@@ -171,7 +179,7 @@ class Hero < ActiveRecord::Base
       material = prompt.select("Material Type:") do |menu|
           menu.choices Wood: "wood", Steel: "steel", Adamantium: "adamantium", Back: "back"
       end
-      item_type hero if material == "back"
+      item_type if material == "back"
       selected_item = Item.find_by(material: material, item_type: choice)
       buy selected_item
   end
@@ -190,8 +198,33 @@ class Hero < ActiveRecord::Base
       i.save
       self.save
       puts `clear`
-      puts "Thank you for you custom."
+      puts "Thank you for your custom."
+      puts "#{item.name} was added to your inventory."
     end
+  end
+
+  def sell_item item_array
+    item = item_array[0]
+    count = item_array[1]
+
+
+    inv_instance = Inventory.find_by(hero_id: self.id, item_id: item.id)
+
+    self.inventories.delete inv_instance
+    self.money += item.price
+  end
+
+  def view_inventory_for_selling
+    if !self.inventories.empty?
+    sell_item self.generate_items_array
+    else
+      TTY::Prompt.new.select("It seems your inventory is empty") do |menu|
+        menu.choices Back: "back"
+      end
+    end
+    puts `clear`
+    shop if item_to_be_sold = "back"
+    sell_item item_to_be_sold
   end
 
   def time
