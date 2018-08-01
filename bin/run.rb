@@ -1,21 +1,9 @@
 require_relative '../config/environment'
 # binding.pry
 # First menu with welcome message
-i = Menu.main
+puts `clear`
+main
 # Move on to the next menu
-case i
-  when "login"
-    Menu.login
-  when "signup"
-    puts "Please enter your new username"
-    name = gets.chomp
-    Menu.signup name
-    user = User.all.last
-    Menu.playing user
-  when "exit"
-    Menu.exit
-end
-
 
 ## Fight random enemy
 ## Look into your inventory
