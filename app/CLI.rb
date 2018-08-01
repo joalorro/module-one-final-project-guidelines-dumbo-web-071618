@@ -67,15 +67,25 @@ def play_menu(hero)
 
     case i
         when "fight"
-            hero.fight
-            play_menu hero
+          hero.fight
+          play_menu hero
         when "stats"
-            hero.display_stats
+          hero.display_stats
         when "inventory"
-            hero.view_items
+          puts `clear`
+          hero.view_items
         when "shop"
-            hero.shop
+          puts `clear`
+          hero.shop
         when "exit"
-            main
+          main
     end
+end
+
+def generate_menu menu_hash
+  menu_hash[:message] = "" if menu_hash[:message].nil?
+  choice = TTY::Prompt.new.select(menu_hash[:message]) do |menu|
+    menu.choices menu_hash[:options]
+  end
+  choice
 end

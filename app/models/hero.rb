@@ -19,21 +19,24 @@ class Hero < ActiveRecord::Base
     rem = self.exp - limit
     if self.exp >= limit
       self.lvl += 1
-      self.exp = rem
       puts "Congratualations! You level up to #{self.lvl}!"
+      self.exp = rem
+      inc_power if self.lvl % 2 == 0
     end
     self.save
   end
 
+  def inc_power
+    self.ap += 1
+    self.dp += 1
+  end
+
+  def update_inventory
+    self.inventories = Hero.find(self.id).inventories
+  end
 ##########FIGHT BEGINS#################
   def fight
-    hero_fp = ((2.0/3.0)*self.ap.to_f + (1.0/3.0)*self.dp.to_f).round(2)
-    enemy_fp = ((rand(30..150)/100.0) * hero_fp).round(2)
-    last_enemy_id = (Enemy.all[-1]).id
-    enemy = Enemy.find(rand(1..last_enemy_id))
-    fight = Fight.create(hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp)
-    winning_chance = (hero_fp/(hero_fp + fight.fp)) * 100
-    losing_chance = 100 - winning_chance
+    winning_chance = calculate_winning_chance
     random_number = rand(1..100)
 
     puts `clear`
@@ -43,6 +46,23 @@ class Hero < ActiveRecord::Base
     puts "Godspeed."
     # add time between the encounter and the result
 
+    determine_outcome winning_chance
+
+    apply_money_xp
+    level_up
+  end
+
+  def calculate_winning_chance
+    hero_fp = ((2.0/3.0)*self.ap.to_f + (1.0/3.0)*self.dp.to_f).round(2)
+    enemy_fp = ((rand(30..150)/100.0) * hero_fp).round(2)
+    last_enemy_id = (Enemy.all[-1]).id
+    enemy = Enemy.find(rand(1..last_enemy_id))
+    fight = Fight.create(hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp)
+    winning_chance = (hero_fp/(hero_fp + fight.fp)) * 100
+    winning_chance
+  end
+
+  def determine_outcome winning_chance
     if winning_chance >= random_number
       #then win
       puts "You win"
@@ -54,10 +74,7 @@ class Hero < ActiveRecord::Base
       fight.win = false
     end
     fight.save
-    apply_money_xp
-    level_up
   end
-
 
   def apply_money_xp
     last_fight = Fight.last
@@ -86,12 +103,15 @@ class Hero < ActiveRecord::Base
     puts "Gold dragon(s): #{self.money}"
     puts "Equipment:"
     display_equipment
-    back_button = TTY::Prompt.new.select("") do |menu|
-      menu.choices Back: "back"
-    end
-    if back_button == "back"
+    choice = generate_menu options: {Back: "back", "Unequip All" => "UE all"}
+
+    if choice == "back"
       puts `clear`
       play_menu self
+    elsif choice == "UE all"
+      puts `clear`
+      unequip_all
+      display_stats
     end
   end
 
@@ -110,7 +130,6 @@ class Hero < ActiveRecord::Base
       end
     end
     self.save
-    # binding.pry
   end
 
   ################ END STATS ########################
@@ -120,13 +139,17 @@ class Hero < ActiveRecord::Base
     puts "You have #{self.money} gold dragons."
     if !self.inventories.empty?
       selection = self.generate_items_array
-      selection == "back" ? play_menu(self) : inv_actions(selection)
-    else
-      TTY::Prompt.new.select("It seems your inventory is empty") do |menu|
-        menu.choices Back: "back"
+      if selection == "back"
+        puts `clear`
+        play_menu(self)
+      else
+        inv_actions(selection)
       end
+    else
+      choice = generate_menu message: "It seems your inventory is empty", options: {Back: "back"}
       play_menu self
     end
+    puts `clear`
   end
 
   def generate_items_array
@@ -143,25 +166,19 @@ class Hero < ActiveRecord::Base
     hash.each do |k, v|
       hashe["#{v[:count]} #{k.to_s}(s)".to_sym] = [v[:inv].item, v[:count]]
     end
-
     hashe[:Back] = "back"
-    item_arr = TTY::Prompt.new.select("Your inventory") do |menu|
-        menu.choices hashe
-    end
 
+    item_arr = generate_menu message: "Your inventory", options: hashe
     item_arr
   end
 
   def inv_actions inv_arr
-    # binding.pry
-
     item = inv_arr[0]
     count = inv_arr[1]
 
-    i = TTY::Prompt.new.select("Your inventory") do |menu|
-        menu.choices Equip: "equip", Unequip: "unequip", Back: "back"
-    end
-    case i
+    choice = generate_menu message: "Your inventory", options: {Equip: "equip", Unequip: "unequip", Back: "back"}
+
+    case choice
       when "equip"
         equip_item item
         view_items
@@ -184,14 +201,15 @@ class Hero < ActiveRecord::Base
     item_to_be_unequipped = self.inventories.find do |inv|
       inv_instance.id != inv.id && inv_instance.item.item_type == inv.item.item_type
     end
-
     unequip item_to_be_unequipped if item_to_be_unequipped
-    if !inv_instance.equip
+    if !inv_instance.equip && inv_instance
       adjust_ap_or_dp("inc", inv_instance.item)
       inv_instance.equip = true
       inv_instance.save
     end
+    puts `clear`
     puts "You equip your #{inv_instance.item.name}"
+    update_inventory
   end
 
   def display_equipment
@@ -222,7 +240,8 @@ class Hero < ActiveRecord::Base
     inv = self.inventories.find do |inv|
       inv.item_id == item.id
     end
-    if inv.equip
+    puts `clear`
+    if inv.equip && !inv.nil?
       inv.equip = false
       adjust_ap_or_dp "dec",item
       puts "You unequip your #{item.name}."
@@ -230,6 +249,20 @@ class Hero < ActiveRecord::Base
       puts "bruh, you weren't wearing that"
     end
     inv.save
+    update_inventory
+  end
+
+  def unequip_all
+    self.inventories.each do |inv|
+      if inv.equip
+        inv.equip = false
+        adjust_ap_or_dp "dec",inv.item
+      end
+      inv.save
+    end
+    self.save
+    update_inventory
+    puts "You unequip everything."
   end
 
   ########### END EQUIPMENT FUNCTIONS ####################
@@ -237,42 +270,28 @@ class Hero < ActiveRecord::Base
   def shop
     puts "You have: #{self.money} gold dragons."
 
-    prompt = TTY::Prompt.new
-    i = prompt.select("Can I help you?") do |menu|
-        menu.choices  Buy: "buy",
-                      Sell: "sell",
-                      "View Stock" => "view",
-                      Back: "back"
-    end
+    choice = generate_menu message: "How can I help you?", options: {Buy: "buy",Sell: "sell","View Stock" => "view", Back: "back"}
 
-    case i
+    case choice
       when "buy"
         item_type
       when "sell"
+        puts `clear`
         view_inventory_for_selling
       when "view"
+        puts `clear`
         show_shop_items
       when "back"
         puts `clear`
         play_menu self
     end
-
     shop
   end
-
-
-
-
-
 
   def equipped_items #######NOT TESTED#############
     self.items.select do |item|
       item.inventory.equip == true
     end
-  end
-
-  def buy_item
-
   end
 
   ## CLASS METHODS ##
@@ -288,24 +307,20 @@ class Hero < ActiveRecord::Base
   end
 
   def item_type
-      puts `clear`
-      prompt = TTY::Prompt.new
-      choice = prompt.select("What would you like to purchase?") do |menu|
-          menu.choices Swords: "sword", Shields: "shield", Armor: "armor", Boots: "boots", Gauntlets: "gauntlets", Helmets: "helmet", Back: "back"
-      end
-      shop if choice == "back"
-      material_menu choice
+    puts `clear`
+
+    choice = generate_menu message: "What would you like to purchase?", options: {Swords: "sword", Shields: "shield", Armor: "armor", Boots: "boots", Gauntlets: "gauntlets", Helmets: "helmet", Back: "back"}
+
+    shop if choice == "back"
+    material_menu choice
   end
 
   def material_menu choice
+    material = generate_menu message: "Material Type:", options: {Wood: "wood", Steel: "steel", Adamantium: "adamantium", Back: "back"}
 
-      prompt = TTY::Prompt.new
-      material = prompt.select("Material Type:") do |menu|
-          menu.choices Wood: "wood", Steel: "steel", Adamantium: "adamantium", Back: "back"
-      end
-      item_type if material == "back"
-      selected_item = Item.find_by(material: material, item_type: choice)
-      buy selected_item
+    item_type if material == "back"
+    selected_item = Item.find_by(material: material, item_type: choice)
+    buy selected_item
   end
 
   def buy item
@@ -350,10 +365,8 @@ class Hero < ActiveRecord::Base
       selection =  self.generate_items_array
       selection == "back" ? (shop) : sell_item(selection)
     else
-      i = TTY::Prompt.new.select("It seems your inventory is empty") do |menu|
-        menu.choices Back: "back"
-      end
-      shop if i == "back"
+      choice = generate_menu message: "It seems your inventory is empty",options: {Back: "back"}
+      shop
     end
 
     # item_to_be_sold == "back" ? shop : sell_item(item_to_be_sold)
