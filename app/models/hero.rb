@@ -15,12 +15,14 @@ class Hero < ActiveRecord::Base
     # current @exp and the threshold and add it to the @exp value after leveling up & restarting
     # the @exp to 0
 
-    limit = 1000 * (1.2 ** (@lvl - 1))
-    rem = @exp - limit
-    if @exp >= limit
-      @lvl += 1
-      @exp = rem
+    limit = (100 * (1.2 ** (self.lvl - 1))).to_i
+    rem = self.exp - limit
+    if self.exp >= limit
+      self.lvl += 1
+      self.exp = rem
+      puts "Congratualations! You level up to #{self.lvl}!"
     end
+    self.save
   end
 
 ##########FIGHT BEGINS#################
@@ -53,6 +55,7 @@ class Hero < ActiveRecord::Base
     end
     fight.save
     apply_money_xp
+    level_up
   end
 
 
@@ -60,6 +63,7 @@ class Hero < ActiveRecord::Base
     last_fight = Fight.last
     money_to_be_added = rand(0..7)
     xp_to_be_added = rand(3..7)
+    # xp_to_be_added = 50
     self.money += money_to_be_added
     self.exp += xp_to_be_added
     self.save
@@ -68,13 +72,55 @@ class Hero < ActiveRecord::Base
 
   #################FIGHT ENDS###################
 
+  ################# STATS ###########################
+
+  def display_stats
+    puts `clear`
+    limit = (100 * (1.2 ** (self.lvl - 1))).to_i
+
+    puts "Name: #{self.name}"
+    puts "Level: #{self.lvl}"
+    puts "Attack Power: #{self.ap}"
+    puts "Defensive Power: #{self.dp}"
+    puts "Experience: #{self.exp} / #{limit}"
+    puts "Gold dragon(s): #{self.money}"
+    puts "Equipment:"
+    display_equipment
+    back_button = TTY::Prompt.new.select("") do |menu|
+      menu.choices Back: "back"
+    end
+    if back_button == "back"
+      puts `clear`
+      play_menu self
+    end
+  end
+
+  def adjust_ap_or_dp adjustment,item
+    if adjustment == "inc"
+      if item.item_type == "sword"
+        self.ap += item.point_value
+      else
+        self.dp += item.point_value
+      end
+    else
+      if item.item_type == "sword"
+        self.ap -= item.point_value
+      else
+        self.dp -= item.point_value
+      end
+    end
+    self.save
+    # binding.pry
+  end
+
+  ################ END STATS ########################
+
+  ################ INVENTORY ########################
   def view_items
-    # puts `clear`
     puts "You have #{self.money} gold dragons."
     if !self.inventories.empty?
       selection = self.generate_items_array
       selection == "back" ? play_menu(self) : inv_actions(selection)
-
     else
       TTY::Prompt.new.select("It seems your inventory is empty") do |menu|
         menu.choices Back: "back"
@@ -86,16 +132,16 @@ class Hero < ActiveRecord::Base
   def generate_items_array
     hash = {}
     self.inventories.each do |inv|
-        if hash.key?(inv.item.name.to_sym)
-            hash[inv.item.name.to_sym][:count] += 1
-        else
-            hash[inv.item.name.to_sym] = {inv: inv, count: 1}
-        end
+      if hash.key?(inv.item.name.to_sym)
+        hash[inv.item.name.to_sym][:count] += 1
+      else
+        hash[inv.item.name.to_sym] = {inv: inv, count: 1}
+      end
     end
 
     hashe = {}
     hash.each do |k, v|
-        hashe["#{v[:count]} #{k.to_s}(s)".to_sym] = [v[:inv].item, v[:count]]
+      hashe["#{v[:count]} #{k.to_s}(s)".to_sym] = [v[:inv].item, v[:count]]
     end
 
     hashe[:Back] = "back"
@@ -103,23 +149,90 @@ class Hero < ActiveRecord::Base
         menu.choices hashe
     end
 
-    item_arr == "back" ? shop : (return item_arr)
+    item_arr
   end
 
   def inv_actions inv_arr
     # binding.pry
+
+    item = inv_arr[0]
+    count = inv_arr[1]
+
     i = TTY::Prompt.new.select("Your inventory") do |menu|
         menu.choices Equip: "equip", Unequip: "unequip", Back: "back"
     end
     case i
       when "equip"
-
+        equip_item item
+        view_items
       when "unequip"
-
+        unequip item
+        view_items
       when "back"
-          play_menu self
+        play_menu self
     end
   end
+
+  ################## END INVENTORY #######################
+
+  ############## EQUIPMENT FUNCTIONS #####################
+
+  def equip_item item
+    inv_instance = self.inventories.find_by item_id: item.id #=> inventory instance that matches the item
+    #Unequip the item of the same item_type
+
+    item_to_be_unequipped = self.inventories.find do |inv|
+      inv_instance.id != inv.id && inv_instance.item.item_type == inv.item.item_type
+    end
+
+    unequip item_to_be_unequipped if item_to_be_unequipped
+    if !inv_instance.equip
+      adjust_ap_or_dp("inc", inv_instance.item)
+      inv_instance.equip = true
+      inv_instance.save
+    end
+    puts "You equip your #{inv_instance.item.name}"
+  end
+
+  def display_equipment
+    equipment_hash = {
+      sword: nil,
+      shield: nil,
+      helmet: nil,
+      armor: nil,
+      gauntlets: nil,
+      boots: nil
+    }
+    self.inventories.select do |inv|
+      inv.equip == true
+    end.each do |inv|
+      equipment_hash[inv.item.item_type.to_sym] = inv.item.name
+    end
+    equipment_hash.each do |item_type,item|
+      if !item.nil?
+        puts " - #{item_type.to_s.capitalize}: #{item.split[0]}"
+      else
+        puts " - #{item_type.to_s.capitalize}:"
+      end
+    end
+  end
+
+  def unequip item
+    puts `clear`
+    inv = self.inventories.find do |inv|
+      inv.item_id == item.id
+    end
+    if inv.equip
+      inv.equip = false
+      adjust_ap_or_dp "dec",item
+      puts "You unequip your #{item.name}."
+    else
+      puts "bruh, you weren't wearing that"
+    end
+    inv.save
+  end
+
+  ########### END EQUIPMENT FUNCTIONS ####################
 
   def shop
     puts "You have: #{self.money} gold dragons."
@@ -166,9 +279,12 @@ class Hero < ActiveRecord::Base
 
   end
 
+<<<<<<< HEAD
   def unequip(inv_arr)
 
   end
+=======
+>>>>>>> e3c2e968beecd9dd721343f46c8b1b96d74d9e67
   ## CLASS METHODS ##
 
   ## PRIVATE METHODS ##
@@ -177,7 +293,7 @@ class Hero < ActiveRecord::Base
   def show_shop_items
     puts `clear`
     Item.all.each do |item|
-      puts "#{item.material.capitalize} #{item.item_type.capitalize}      -       #{item.price} Gold Dragons"
+      puts "#{item.material.capitalize} #{item.item_type.capitalize}\t \t-\t#{item.price} Gold Dragons"
     end
   end
 
@@ -208,12 +324,12 @@ class Hero < ActiveRecord::Base
       puts "Sorry, you can't afford this."
       puts "You need #{item.price - self.money} more gold dragons in order to purchase this #{item.name}."
     else
-      i = Inventory.create
-      i.hero = self
-      i.item = item
-      i.equip = false
+      inv_instance = Inventory.create
+      inv_instance.hero = self
+      inv_instance.item = item
+      inv_instance.equip = false
       self.money -= item.price
-      i.save
+      inv_instance.save
       self.save
       puts `clear`
       puts "Thank you for your custom."
@@ -241,7 +357,8 @@ class Hero < ActiveRecord::Base
   def view_inventory_for_selling
     puts "You have #{self.money} gold dragons."
     if !self.inventories.empty?
-    sell_item self.generate_items_array
+      selection =  self.generate_items_array
+      selection == "back" ? (shop) : sell_item(selection)
     else
       i = TTY::Prompt.new.select("It seems your inventory is empty") do |menu|
         menu.choices Back: "back"
@@ -265,7 +382,5 @@ class Hero < ActiveRecord::Base
         str.count(".") < 5 ? str += "." : str = "fighting"
       end
     end
-
   end
-
 end

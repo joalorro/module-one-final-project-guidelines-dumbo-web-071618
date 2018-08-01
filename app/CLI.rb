@@ -1,5 +1,5 @@
 def main
-    i = TTY::Prompt.new.select("Welcome to the game of .. ") do |menu|
+    i = TTY::Prompt.new.select("Welcome to the land with no name.") do |menu|
         menu.choices Login: "login", "Sign Up" => "signup", Exit: "exit"
     end
 
@@ -55,21 +55,26 @@ def new_hero id
 end
 
 def play_menu(hero)
+    hero = Hero.find(hero.id)
     prompt = TTY::Prompt.new
     i = prompt.select("Welcome, #{hero.name}.") do |menu|
-        menu.choices Fight: "fight", Inventory: "inventory", Shop: "shop", "Sign out" => "exit"
+        menu.choices  Fight: "fight",
+                      Stats: "stats",
+                      Inventory: "inventory",
+                      Shop: "shop",
+                      "Sign Out" => "exit"
     end
 
     case i
         when "fight"
             hero.fight
             play_menu hero
+        when "stats"
+            hero.display_stats
         when "inventory"
             hero.view_items
-            play_menu hero
         when "shop"
             hero.shop
-            play_menu hero
         when "exit"
             main
     end
