@@ -23,6 +23,7 @@ class Hero < ActiveRecord::Base
     end
   end
 
+##########FIGHT BEGINS#################
   def fight
     hero_fp = ((2.0/3.0)*self.ap.to_f + (1.0/3.0)*self.dp.to_f).round(2)
     enemy_fp = ((rand(30..150)/100.0) * hero_fp).round(2)
@@ -44,16 +45,32 @@ class Hero < ActiveRecord::Base
       #then win
       puts "You win"
       fight.win = true
+      # apply_money_xp
     else
       #lose
       puts "You lose"
       fight.win = false
     end
     fight.save
+    apply_money_xp
   end
+
+
+  def apply_money_xp
+    last_fight = Fight.last
+    money_to_be_added = rand(0..7)
+    xp_to_be_added = rand(3..7)
+    self.money += money_to_be_added
+    self.exp += xp_to_be_added
+    self.save
+    puts "You gained #{money_to_be_added} gold dragon(s) and #{xp_to_be_added} xp points."
+  end
+
+  #################FIGHT ENDS###################
 
   def view_items
     # puts `clear`
+    puts "You have #{self.money} gold dragons."
     if !self.inventories.empty?
       selection = self.generate_items_array
       selection == "back" ? play_menu(self) : inv_actions(selection)
@@ -64,10 +81,6 @@ class Hero < ActiveRecord::Base
       end
       play_menu self
     end
-  end
-
-  def sell
-
   end
 
   def generate_items_array
@@ -90,7 +103,7 @@ class Hero < ActiveRecord::Base
         menu.choices hashe
     end
 
-    item_arr
+    item_arr == "back" ? shop : (return item_arr)
   end
 
   def inv_actions inv_arr
@@ -130,6 +143,7 @@ class Hero < ActiveRecord::Base
         puts `clear`
         play_menu self
     end
+
     shop
   end
 
@@ -209,23 +223,29 @@ class Hero < ActiveRecord::Base
 
 
     inv_instance = Inventory.find_by(hero_id: self.id, item_id: item.id)
+    sell_value = (0.25 * item.price).to_i
 
     self.inventories.delete inv_instance
-    self.money += item.price
+    self.money += sell_value
     self.save
+
+    puts `clear`
+
+    puts "You have sold 1 #{item.name} for #{sell_value} gold dragons."
   end
 
   def view_inventory_for_selling
+    puts "You have #{self.money} gold dragons."
     if !self.inventories.empty?
     sell_item self.generate_items_array
     else
-      TTY::Prompt.new.select("It seems your inventory is empty") do |menu|
+      i = TTY::Prompt.new.select("It seems your inventory is empty") do |menu|
         menu.choices Back: "back"
       end
+      shop if i == "back"
     end
-    puts `clear`
-    shop if item_to_be_sold = "back"
-    sell_item item_to_be_sold
+
+    # item_to_be_sold == "back" ? shop : sell_item(item_to_be_sold)
   end
 
   def time
