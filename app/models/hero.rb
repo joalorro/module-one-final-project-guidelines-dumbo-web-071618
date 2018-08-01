@@ -80,6 +80,8 @@ class Hero < ActiveRecord::Base
 
     puts "Name: #{self.name}"
     puts "Level: #{self.lvl}"
+    puts "Attack Power: #{self.ap}"
+    puts "Defensive Power: #{self.dp}"
     puts "Experience: #{self.exp} / #{limit}"
     puts "Gold dragon(s): #{self.money}"
     puts "Equipment:"
@@ -87,17 +89,34 @@ class Hero < ActiveRecord::Base
     back_button = TTY::Prompt.new.select("") do |menu|
       menu.choices Back: "back"
     end
-    if back_button = "back"
+    if back_button == "back"
       puts `clear`
       play_menu self
     end
+  end
+
+  def adjust_ap_or_dp adjustment,item
+    if adjustment == "inc"
+      if item.item_type == "sword"
+        self.ap += item.point_value
+      else
+        self.dp += item.point_value
+      end
+    else
+      if item.item_type == "sword"
+        self.ap -= item.point_value
+      else
+        self.dp -= item.point_value
+      end
+    end
+    self.save
+    # binding.pry
   end
 
   ################ END STATS ########################
 
   ################ INVENTORY ########################
   def view_items
-    puts `clear`
     puts "You have #{self.money} gold dragons."
     if !self.inventories.empty?
       selection = self.generate_items_array
@@ -145,10 +164,12 @@ class Hero < ActiveRecord::Base
     case i
       when "equip"
         equip_item item
+        view_items
       when "unequip"
         unequip item
+        view_items
       when "back"
-          play_menu self
+        play_menu self
     end
   end
 
@@ -158,16 +179,19 @@ class Hero < ActiveRecord::Base
 
   def equip_item item
     inv_instance = self.inventories.find_by item_id: item.id #=> inventory instance that matches the item
-    inv_instance.equip = true
-    inv_instance.save
-
     #Unequip the item of the same item_type
-    self.inventories.each do |inv|
-      if inv_instance.id != inv.id && inv_instance.item.item_type == inv.item.item_type
-        inv.equip = false
-        inv.save
-      end
+
+    item_to_be_unequipped = self.inventories.find do |inv|
+      inv_instance.id != inv.id && inv_instance.item.item_type == inv.item.item_type
     end
+
+    unequip item_to_be_unequipped if item_to_be_unequipped
+    if !inv_instance.equip
+      adjust_ap_or_dp("inc", inv_instance.item)
+      inv_instance.equip = true
+      inv_instance.save
+    end
+    puts "You equip your #{inv_instance.item.name}"
   end
 
   def display_equipment
@@ -194,15 +218,18 @@ class Hero < ActiveRecord::Base
   end
 
   def unequip item
+    puts `clear`
     inv = self.inventories.find do |inv|
       inv.item_id == item.id
     end
     if inv.equip
       inv.equip = false
+      adjust_ap_or_dp "dec",item
       puts "You unequip your #{item.name}."
     else
       puts "bruh, you weren't wearing that"
     end
+    inv.save
   end
 
   ########### END EQUIPMENT FUNCTIONS ####################
