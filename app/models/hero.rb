@@ -36,7 +36,13 @@ class Hero < ActiveRecord::Base
   end
 ##########FIGHT BEGINS#################
   def fight
-    winning_chance = calculate_winning_chance
+    hero_fp = ((2.0/3.0)*self.ap.to_f + (1.0/3.0)*self.dp.to_f).round(2)
+    enemy_fp = ((rand(30..150)/100.0) * hero_fp).round(2)
+    last_enemy_id = (Enemy.all[-1]).id
+    enemy = Enemy.find(rand(1..last_enemy_id))
+    fight = Fight.create(hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp)
+    winning_chance = (hero_fp/(hero_fp + fight.fp)) * 100
+    losing_chance = 100 - winning_chance
     random_number = rand(1..100)
 
     puts `clear`
@@ -46,23 +52,6 @@ class Hero < ActiveRecord::Base
     puts "Godspeed."
     # add time between the encounter and the result
 
-    determine_outcome winning_chance
-
-    apply_money_xp
-    level_up
-  end
-
-  def calculate_winning_chance
-    hero_fp = ((2.0/3.0)*self.ap.to_f + (1.0/3.0)*self.dp.to_f).round(2)
-    enemy_fp = ((rand(30..150)/100.0) * hero_fp).round(2)
-    last_enemy_id = (Enemy.all[-1]).id
-    enemy = Enemy.find(rand(1..last_enemy_id))
-    fight = Fight.create(hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp)
-    winning_chance = (hero_fp/(hero_fp + fight.fp)) * 100
-    winning_chance
-  end
-
-  def determine_outcome winning_chance
     if winning_chance >= random_number
       #then win
       puts "You win"
@@ -74,7 +63,10 @@ class Hero < ActiveRecord::Base
       fight.win = false
     end
     fight.save
+    apply_money_xp
+    level_up
   end
+
 
   def apply_money_xp
     last_fight = Fight.last
