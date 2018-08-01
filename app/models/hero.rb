@@ -62,8 +62,8 @@ class Hero < ActiveRecord::Base
   def apply_money_xp
     last_fight = Fight.last
     money_to_be_added = rand(0..7)
-    # xp_to_be_added = rand(3..7)
-    xp_to_be_added = 50
+    xp_to_be_added = rand(3..7)
+    # xp_to_be_added = 50
     self.money += money_to_be_added
     self.exp += xp_to_be_added
     self.save
@@ -283,7 +283,7 @@ class Hero < ActiveRecord::Base
   def show_shop_items
     puts `clear`
     Item.all.each do |item|
-      puts "#{item.material.capitalize} #{item.item_type.capitalize}      -       #{item.price} Gold Dragons"
+      puts "#{item.material.capitalize} #{item.item_type.capitalize}\t \t-\t#{item.price} Gold Dragons"
     end
   end
 
