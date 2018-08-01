@@ -59,10 +59,14 @@ class Hero < ActiveRecord::Base
   end
 
   def buy_item
+    
+  end
+
+  def equip(inv_arr)
 
   end
 
-  def equip_item
+  def unequip(inv_arr)
 
   end
 

@@ -3,18 +3,16 @@ module Menu
         puts `clear`
         prompt = TTY::Prompt.new
         i = prompt.select("Welcome to the game of .. ") do |menu|
-            menu.choices Login: "login", Signup: "signup", Exit: "exit"
+            menu.choices Login: "login", "Sign up": "signup", Exit: "exit"
         end
 
         case i
             when "login"
-                Menu.login
+                self.login
             when "signup"
-                puts "Please enter your new username"
-                name = gets.chomp
-                Menu.signup name
+                self.signup
                 user = User.all.last
-                Menu.playing user
+                self.playing user
             when "exit"
                 puts "Thanks fo playin sucka"
                 Menu.exit
@@ -27,24 +25,31 @@ module Menu
         if !User.find_by(name: name)
             ## Direct user to create a new hero
             puts "We don’t have your name on profile, so we will create one for you!"
-           
-            # Call on signup
-            self.signup(name)
             
+            # Call on signup
+            self.signup(name: name)    
         end
         # binding.pry
         user = User.find_by(name: name)
-
         self.playing(user)
     end
 
-    def self.signup(name)
-        puts `clear`
+    def self.signup(name: nil)
+        if name.nil?
+            puts "Please enter your new username"
+            name = gets.chomp
+        end
+        if !User.find_by(name: name)
+            User.create(name: name)
+            self.create_hero(name)
+        end
+        
+    end
+
+    def self.create_hero(name)
         puts "What would you like to name your hero?"
         hero_name = gets.chomp
-        User.create(name: name)
         Hero.create name: hero_name, user_id: (User.find_by(name: name)).id
-        
     end
 
     def self.playing(user)
@@ -56,7 +61,7 @@ module Menu
         
         case i
             when "fight"
-                (user.hero).fight
+                user.hero.fight
                 Menu.playing user
             when "inventory"
                 self.inventory(user)
@@ -112,9 +117,9 @@ module Menu
 
         case i 
             when "equip"
-                
+                hero.equip(inv_arr)
             when "unequip"
- 
+                hero.unequip(inv_arr)
             when "back"
                 Menu.playing user 
         end 
