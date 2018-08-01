@@ -59,6 +59,7 @@ def play_menu(hero)
     prompt = TTY::Prompt.new
     i = prompt.select("Welcome, #{hero.name}.") do |menu|
         menu.choices  Fight: "fight",
+                      "Fight History" => "fight_history",
                       Stats: "stats",
                       Inventory: "inventory",
                       Shop: "shop",
@@ -71,6 +72,8 @@ def play_menu(hero)
             play_menu hero
         when "stats"
             hero.display_stats
+        when "fight_history"
+            hero.display_fight_history
         when "inventory"
             hero.view_items
         when "shop"
