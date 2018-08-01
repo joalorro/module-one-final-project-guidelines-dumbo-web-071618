@@ -146,7 +146,7 @@ class Hero < ActiveRecord::Base
       when "equip"
         equip_item item
       when "unequip"
-
+        unequip item
       when "back"
           play_menu self
     end
@@ -190,6 +190,18 @@ class Hero < ActiveRecord::Base
       else
         puts " - #{item_type.to_s.capitalize}:"
       end
+    end
+  end
+
+  def unequip item
+    inv = self.inventories.find do |inv|
+      inv.item_id == item.id
+    end
+    if inv.equip
+      inv.equip = false
+      puts "You unequip your #{item.name}."
+    else
+      puts "bruh, you weren't wearing that"
     end
   end
 
