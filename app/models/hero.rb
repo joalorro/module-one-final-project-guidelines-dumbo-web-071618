@@ -52,6 +52,84 @@ class Hero < ActiveRecord::Base
     fight.save
   end
 
+  def view_items
+    puts `clear`
+    if !self.inventories.empty?
+      hero.generate_items_array
+    else
+      TTY::Prompt.new.select("It seems your inventory is empty") do |menu|
+        menu.choices Back: "back"
+      end
+      play_menu self
+    end
+  end
+
+  def generate_items_array
+    hash = {}
+    self.inventories.each do |inv|
+        if hash.key?(inv.item.name.to_sym)
+            hash[inv.item.name.to_sym][:count] += 1
+        else
+            hash[inv.item.name.to_sym] = {inv: inv, count: 1}
+        end
+    end
+
+    hashe = {}
+    hash.each do |k, v|
+        hashe["#{v[:count]} #{k.to_s}(s)".to_sym] = [v[:inv].item, v[:count]]
+    end
+
+    item_arr = TTY::Prompt.new.select("Your inventory") do |menu|
+        menu.choices hashe
+    end
+    inv_actions item_arr
+  end
+
+  def inv_actions inv_arr
+    # binding.pry
+    i = TTY::Prompt.new.select("Your inventory") do |menu|
+        menu.choices Equip: "equip", Unequip: "unequip", Back: "back"
+    end
+    case i
+      when "equip"
+
+      when "unequip"
+
+      when "back"
+          play_menu self
+    end
+  end
+
+  def shop
+    puts "You have: #{self.money} gold dragons."
+
+    prompt = TTY::Prompt.new
+    i = prompt.select("Can I help you?") do |menu|
+        menu.choices  Buy: "buy",
+                      Sell: "sell",
+                      "View Stock" => "view",
+                      Back: "back"
+    end
+
+    case i
+      when "buy"
+        item_type
+      when "sell"
+
+      when "view"
+        show_shop_items
+      when "back"
+        puts `clear`
+        play_menu self
+    end
+    shop
+  end
+
+
+
+
+
+
   def equipped_items #######NOT TESTED#############
     hero.items.select do |item|
       item.inventory.equip == true
@@ -65,21 +143,67 @@ class Hero < ActiveRecord::Base
   def equip_item
 
   end
-
   ## CLASS METHODS ##
 
   ## PRIVATE METHODS ##
+  private
 
- def time
+  def show_shop_items
+    puts `clear`
+    Item.all.each do |item|
+      puts "#{item.material.capitalize} #{item.item_type.capitalize}      -       #{item.price} Gold Dragons"
+    end
+  end
+
+  def item_type
+      puts `clear`
+      prompt = TTY::Prompt.new
+      choice = prompt.select("What would you like to purchase?") do |menu|
+          menu.choices Swords: "sword", Shields: "shield", Armor: "armor", Boots: "boots", Gauntlets: "gauntlets", Helmets: "helmet", Back: "back"
+      end
+      shop hero if choice == "back"
+      material_menu choice
+  end
+
+  def material_menu choice
+
+      prompt = TTY::Prompt.new
+      material = prompt.select("Material Type:") do |menu|
+          menu.choices Wood: "wood", Steel: "steel", Adamantium: "adamantium", Back: "back"
+      end
+      item_type hero if material == "back"
+      selected_item = Item.find_by(material: material, item_type: choice)
+      buy selected_item
+  end
+
+  def buy item
+    if item.price > self.money
+      puts `clear`
+      puts "Sorry, you can't afford this."
+      puts "You need #{item.price - self.money} more gold dragons in order to purchase this #{item.name}."
+    else
+      i = Inventory.create
+      i.hero = self
+      i.item = item
+      i.equip = false
+      self.money -= item.price
+      i.save
+      self.save
+      puts `clear`
+      puts "Thank you for you custom."
+    end
+  end
+
+  def time
     i = 0
     start_time = Time.now
     seconds = 3
-    end_time = start_time + seconds 
+    end_time = start_time + seconds
     str = "fighting"
     while Time.now < end_time
       if Time.now % 250 == 0
         print str
-        
+
         str.count(".") < 5 ? str += "." : str = "fighting"
       end
     end
