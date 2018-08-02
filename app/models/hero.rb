@@ -37,8 +37,11 @@ class Hero < ActiveRecord::Base
 ##########FIGHT BEGINS#################
   def fight_enemy
     pastel = Pastel.new
-    #create enemy
-    enemy = Enemy.find(rand(1..Enemy.last.id))
+
+    #generate tiered enemy
+    enemy = generate_enemy
+
+    #calculate winning chance
     winning_chance = calculate_winning_chance enemy
     random_number = rand(1..100)
     new_fight = Fight.last
@@ -78,13 +81,29 @@ class Hero < ActiveRecord::Base
     level_up
   end
 
+  def generate_enemy
+    if self.lvl <= 5
+      tiers = 5
+    elsif self.lvl > 5 && self.lvl <= 10
+      tiers = 10
+    elsif self.lvl > 10 && self.lvl <= 15
+      tiers = 15
+    end
+    Enemy.find(rand(1..tiers))
+  end
+
   def calculate_winning_chance enemy
     #Establish fight powers of both the hero and the enemy
-    hero_fp = ((2.0/3.0) * self.ap.to_f + (1.0/3.0) * self.dp.to_f).round(2)
-    enemy_fp = ((rand(30..150)/100.0) * hero_fp).round(2)
+
+    base = ((self.lvl.to_f + 10.0 ) / 2.0)
+
+    base_fp = (base * 2)
+    enemy_fp = ((rand(100..400)/100.0) * base_fp * (1.5 ** enemy.tier)).round(2)
+
+    adjusted_hero_fp = (2.0/3.0) * self.ap.to_f + (1.0/3.0) * self.dp.to_f
 
     new_fight = Fight.create(hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp)
-    winning_chance = (hero_fp/(hero_fp + new_fight.fp)) * 100
+    winning_chance = (adjusted_hero_fp/(adjusted_hero_fp + enemy_fp)) * 100
 
     #display fight encounter message
     display_fight_encounter_msg enemy,enemy_fp,winning_chance
@@ -108,17 +127,17 @@ class Hero < ActiveRecord::Base
     pastel = Pastel.new
     last_fight = Fight.last
 
-    formula = rand(5..15) * (1.1 ** self.lvl)
+    formula = rand(10..20) * (1.1 ** self.lvl)
 
     money_to_be_added = formula
-    xp_to_be_added = formula
+    xp_to_be_added = formula * (1.1 ** self.lvl)
 
     #if you lose, your rewards are reduced
     #if your level is high enough, you start losing gold if
     #you lose
     if !last_fight.win
       money_to_be_added = money_to_be_added / 4
-
+      xp_to_be_added = xp_to_be_added / 2
       if self.lvl > 15
         if self.money - money_to_be_added < 0
           self.money = 0
@@ -129,7 +148,7 @@ class Hero < ActiveRecord::Base
         self.money += money_to_be_added.to_i
       end
     else
-      xp_to_be_added = xp_to_be_added / 2
+
       self.money += money_to_be_added.round.to_i
     end
     puts end_of_fight_message money_to_be_added.round, xp_to_be_added.round

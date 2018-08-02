@@ -112,7 +112,8 @@ def generate_menu_of_selected_item_type item_type
     end.each do |item|
       options_hash[item.name.to_sym] = item
     end
-  else
+  end
+  if options_hash.empty? || self.inventories.empty?
     options_hash[:Back] = "back"
     message = "You don't seem to have anything here."
   end
