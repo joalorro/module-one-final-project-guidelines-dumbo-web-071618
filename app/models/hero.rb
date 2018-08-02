@@ -14,15 +14,16 @@ class Hero < ActiveRecord::Base
     #exp value to 0. If @exp is greater than the threshold, take the difference between
     # current @exp and the threshold and add it to the @exp value after leveling up & restarting
     # the @exp to 0
-
+    pastel = Pastel.new
+    message = "Congratualations! You level up to #{self.lvl}!"
+    pastel.decorate(message, :green)
     limit = (100 * (1.2 ** (self.lvl - 1))).to_i
     rem = self.exp - limit
     if self.exp >= limit
       self.lvl += 1
-      puts "Congratualations! You level up to #{self.lvl}!"
+
       self.exp = rem
-      inc_power if self.lvl % 2 == 0
-    end
+      inc_power if self.lvl % 2 == 0    end
     self.save
   end
 
@@ -36,6 +37,7 @@ class Hero < ActiveRecord::Base
   end
 ##########FIGHT BEGINS#################
   def fight
+    pastel = Pastel.new
     hero_fp = ((2.0/3.0)*self.ap.to_f + (1.0/3.0)*self.dp.to_f).round(2)
     enemy_fp = ((rand(30..150)/100.0) * hero_fp).round(2)
     last_enemy_id = (Enemy.all[-1]).id
@@ -47,19 +49,31 @@ class Hero < ActiveRecord::Base
 
     puts `clear`
 
-    puts "You encounter a #{enemy.species} with the power of #{enemy_fp}."
-    puts "Your chances of winning are #{winning_chance.round(1)}%."
+    puts "You encounter a #{enemy.species} with the power of #{enemy_fp}"
+    puts "Your chances of winning are #{winning_chance.round(1)}%"
     puts "Godspeed."
     # add time between the encounter and the result
+    #####DELAY BEGINS#########
+    i = 3
+    str = "Fighting"
+    loop do
+      print i.to_s + "\r"
+      $stdout.flush
+      i = i.to_i
+      i -= 1
+      sleep 1
+      break if i == 0
+    end
+    ########DELAY ENDS########
 
     if winning_chance >= random_number
       #then win
-      puts "You win"
+      puts pastel.decorate("You win", :green)
       fight.win = true
       # apply_money_xp
     else
       #lose
-      puts "You lose"
+      puts pastel.decorate("You lose", :red)
       fight.win = false
     end
     fight.save
@@ -69,6 +83,7 @@ class Hero < ActiveRecord::Base
 
 
   def apply_money_xp
+    pastel = Pastel.new
     last_fight = Fight.last
     money_to_be_added = rand(0..7)
     xp_to_be_added = rand(3..7)
@@ -76,7 +91,10 @@ class Hero < ActiveRecord::Base
     self.money += money_to_be_added
     self.exp += xp_to_be_added
     self.save
-    puts "You gained #{money_to_be_added} gold dragon(s) and #{xp_to_be_added} xp points."
+    puts "You gained"
+    print pastel.decorate("#{money_to_be_added} gold dragon(s)", :yellow)
+    print " and "
+    print pastel.decorate("#{xp_to_be_added} xp points.", :blue)
   end
 
   #################FIGHT ENDS###################
@@ -129,6 +147,19 @@ class Hero < ActiveRecord::Base
   end
 
   ################ END STATS ########################
+  ###############################FIGHT HISTORY BEGINS###########################
+  def display_fight_history
+    puts `clear`
+    self.fights.each do |fight|
+      fight.win ? result = "won" : result = "lost"
+      puts "You've fought a " + fight.enemy.species.capitalize + " with the power of " + fight.fp.to_s + " and " + result + "."
+    end
+  end
+
+
+
+
+  ####################FIGHT HISTORY ENDS#################################
 
   ################ INVENTORY ########################
   def view_items
