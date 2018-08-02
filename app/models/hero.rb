@@ -55,15 +55,14 @@ class Hero < ActiveRecord::Base
 
     # add time between the encounter and the result
     #####DELAY BEGINS#########
-    i = 3
+    i = 0
     str = "Fighting"
     loop do
-      print i.to_s + "\r"
+      print str + "." * i + "\r"
       $stdout.flush
-      i = i.to_i
-      i -= 1
+      i += 1
       sleep 1
-      break if i == 0
+      break if i == 3
     end
     ########DELAY ENDS########
 
