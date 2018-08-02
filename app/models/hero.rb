@@ -7,10 +7,6 @@ class Hero < ActiveRecord::Base
   has_many :enemies, through: :fights
   # attr_accessor :name, :ap, :dp, :exp, :lvl, :inventory, :money
 
-  def money= gold
-    self.money = 0 if self.money - gold < 0
-  end
-
   ## INSTANCE METHODS ##
 
   def level_up
@@ -39,19 +35,13 @@ class Hero < ActiveRecord::Base
     self.inventories = Hero.find(self.id).inventories
   end
 ##########FIGHT BEGINS#################
-  def fight
+  def fight_enemy
     pastel = Pastel.new
-    hero_fp = ((2.0/3.0)*self.ap.to_f + (1.0/3.0)*self.dp.to_f).round(2)
-    enemy_fp = ((rand(30..150)/100.0) * hero_fp).round(2)
-    last_enemy_id = (Enemy.all[-1]).id
-    enemy = Enemy.find(rand(1..last_enemy_id))
-    fight = Fight.create(hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp)
-    winning_chance = (hero_fp/(hero_fp + fight.fp)) * 100
-    losing_chance = 100 - winning_chance
+    #create enemy
+    enemy = Enemy.find(rand(1..Enemy.last.id))
+    winning_chance = calculate_winning_chance enemy
     random_number = rand(1..100)
-
-    #display fight encounter message
-    display_fight_encounter_msg enemy,enemy_fp,winning_chance
+    new_fight = Fight.last
 
     # add time between the encounter and the result
     #####DELAY BEGINS#########
@@ -75,17 +65,32 @@ class Hero < ActiveRecord::Base
         message = pastel.decorate("You have slain the #{enemy.species}!", :green)
       end
       puts message
-      fight.win = true
+      new_fight.win = true
       # apply_money_xp
     else
       #lose
       puts pastel.decorate("You were slain by the #{enemy.species}!", :red)
       puts "You were revived at the nearest temple."
-      fight.win = false
+      new_fight.win = false
     end
-    fight.save
+    new_fight.save
     apply_money_xp
+    self.money = Hero.find(self.id).money
     level_up
+  end
+
+  def calculate_winning_chance enemy
+    #Establish fight powers of both the hero and the enemy
+    hero_fp = ((2.0/3.0) * self.ap.to_f + (1.0/3.0) * self.dp.to_f).round(2)
+    enemy_fp = ((rand(30..150)/100.0) * hero_fp).round(2)
+
+    new_fight = Fight.create(hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp)
+    winning_chance = (hero_fp/(hero_fp + new_fight.fp)) * 100
+
+    #display fight encounter message
+    display_fight_encounter_msg enemy,enemy_fp,winning_chance
+
+    winning_chance
   end
 
   def display_fight_encounter_msg enemy,enemy_fp,winning_chance
@@ -104,22 +109,29 @@ class Hero < ActiveRecord::Base
     pastel = Pastel.new
     last_fight = Fight.last
 
-    money_to_be_added = rand(5..15)
-    xp_to_be_added = rand(6..14)
+    money_to_be_added = rand(5..15) * (1.2 * self.lvl)
+    xp_to_be_added = rand(6..14) * (1.2 * self.lvl)
 
     #if you lose, your rewards are reduced
     #if your level is high enough, you start losing gold if
     #you lose
-      if !last_fight.win
-        money_to_be_added = money_to_be_added / 3
-        xp_to_be_added = xp_to_be_added / 3
-        if self.lvl > 15
-          money_to_be_added = -money_to_be_added
+    if !last_fight.win
+      money_to_be_added = money_to_be_added / 3
+      xp_to_be_added = xp_to_be_added / 3
+      if self.lvl > 15
+        if self.money - money_to_be_added < 0
+          self.money = 0
+        else
+          self.money -= money_to_be_added.to_i
         end
+      else
+        self.money += money_to_be_added.to_i
       end
-    puts end_of_fight_message money_to_be_added, xp_to_be_added
-    self.money += money_to_be_added
-    self.exp += xp_to_be_added
+    else
+      self.money += money_to_be_added.round.to_i
+    end
+    puts end_of_fight_message money_to_be_added.round, xp_to_be_added.round
+    self.exp += xp_to_be_added.round
     self.save
   end
 
@@ -188,14 +200,20 @@ class Hero < ActiveRecord::Base
   ###############################FIGHT HISTORY BEGINS###########################
   def display_fight_history
     puts `clear`
+    death_count = 0
+    pastel = Pastel.new
+
     if self.fights.length == 0
       generate_menu message: "You haven't fought yet!", options: {Back: ""}
     else
       self.fights.each do |fight|
+        death_count += 1 if !fight.win?
         fight.win ? result = "won" : result = "lost"
         puts "You fought a " + fight.enemy.species.capitalize + " with the power of " + fight.fp.to_s + " and " + result + "."
       end
     end
+    colored_death_count = pastel.decorate("#{death_count} times",:red)
+    puts "In summary, out of #{self.fights.length} fights, you have died #{colored_death_count}!"
   end
 
 

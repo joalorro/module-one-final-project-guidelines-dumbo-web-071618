@@ -68,11 +68,12 @@ def play_menu(hero)
 
     case i
         when "fight"
-          hero.fight
+          hero.fight_enemy
           play_menu hero
         when "stats"
           hero.display_stats
         when "fight_history"
+          puts `clear`
           hero.display_fight_history
           play_menu hero
         when "inventory"
