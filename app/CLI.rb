@@ -89,3 +89,22 @@ def generate_menu menu_hash
   end
   choice
 end
+
+def generate_menu_options_from_inventory hero
+  options = hero.get_equipped_objects.each do |inv_object|
+    options_hash[inv_object.item.name.to_sym] = [inv_object.item, inv.object]
+  end
+  options
+end
+
+def generate_menu_of_selected_item_type item_type
+  options_hash = {}
+  self.inventories.select do |inv|
+    inv.hero_id == self.id && inv.item.item_type == item_type
+  end.map do |inv|
+    inv.item
+  end.each do |item|
+    options_hash[item.name.to_sym] = item
+  end
+  generate_menu options: options_hash
+end

@@ -95,11 +95,14 @@ class Hero < ActiveRecord::Base
     puts "Gold dragon(s): #{self.money}"
     puts "Equipment:"
     display_equipment
-    choice = generate_menu options: {Back: "back", "Unequip All" => "UE all"}
+    choice = generate_menu options: {Back: "back", "Adjust Equipment" => "adjust", "Unequip All" => "UE all"}
 
     if choice == "back"
       puts `clear`
       play_menu self
+    elsif choice == "adjust"
+      adjust_equipment
+      display_stats
     elsif choice == "UE all"
       puts `clear`
       unequip_all
@@ -107,7 +110,8 @@ class Hero < ActiveRecord::Base
     end
   end
 
-  def adjust_ap_or_dp adjustment,item
+  def adjust_ap_or_dp adjustment = nil,item
+    #defaults to decreasing stats if no adjustment is passed in
     if adjustment == "inc"
       if item.item_type == "sword"
         self.ap += item.point_value
@@ -161,6 +165,7 @@ class Hero < ActiveRecord::Base
     hashe[:Back] = "back"
 
     item_arr = generate_menu message: "Your inventory", options: hashe
+
     item_arr
   end
 
@@ -170,16 +175,13 @@ class Hero < ActiveRecord::Base
 
     choice = generate_menu message: "Your inventory", options: {Equip: "equip", Unequip: "unequip", Back: "back"}
 
-    case choice
-      when "equip"
-        equip_item item
-        view_items
-      when "unequip"
-        unequip item
-        view_items
-      when "back"
-        play_menu self
+    if choice == "equip"
+      equip_item item
+    elsif "unequip"
+      unequip item
     end
+    choice == "back" ? play_menu(self) : view_items
+
   end
 
   ################## END INVENTORY #######################
@@ -193,7 +195,7 @@ class Hero < ActiveRecord::Base
     item_to_be_unequipped = self.inventories.find do |inv|
       inv_instance.id != inv.id && inv_instance.item.item_type == inv.item.item_type
     end
-    unequip item_to_be_unequipped if item_to_be_unequipped
+    unequip item_to_be_unequipped.item if item_to_be_unequipped
     if !inv_instance.equip && inv_instance
       adjust_ap_or_dp("inc", inv_instance.item)
       inv_instance.equip = true
@@ -213,9 +215,7 @@ class Hero < ActiveRecord::Base
       gauntlets: nil,
       boots: nil
     }
-    self.inventories.select do |inv|
-      inv.equip == true
-    end.each do |inv|
+    get_equipped_objects.each do |inv|
       equipment_hash[inv.item.item_type.to_sym] = inv.item.name
     end
     equipment_hash.each do |item_type,item|
@@ -235,7 +235,7 @@ class Hero < ActiveRecord::Base
     puts `clear`
     if inv.equip && !inv.nil?
       inv.equip = false
-      adjust_ap_or_dp "dec",item
+      adjust_ap_or_dp item
       puts "You unequip your #{item.name}."
     else
       puts "bruh, you weren't wearing that"
@@ -257,8 +257,27 @@ class Hero < ActiveRecord::Base
     puts "You unequip everything."
   end
 
+  def get_equipped_objects
+    self.inventories.select do |inv|
+      inv.equip == true
+    end
+  end
+
+  def adjust_equipment
+    choice = generate_menu options: {Sword: "sword",Shield: "shield",Helmet: "helmet",Armor: "armor", Gauntlets: "gauntlets", Boots: "boots", Back: "back"}
+
+    if choice == 'back'
+      display_stats
+    else
+      item_choice = generate_menu_of_selected_item_type choice
+      equip_item item_choice
+    end
+    update_inventory
+  end
+
   ########### END EQUIPMENT FUNCTIONS ####################
 
+  ############ SHOPPING FUNCTIONS #########################
   def shop
     puts "You have: #{self.money} gold dragons."
 
@@ -280,11 +299,7 @@ class Hero < ActiveRecord::Base
     shop
   end
 
-  def equipped_items #######NOT TESTED#############
-    self.items.select do |item|
-      item.inventory.equip == true
-    end
-  end
+  ####################### END SHOP FUNCTIONS #############################
 
   ## CLASS METHODS ##
 
