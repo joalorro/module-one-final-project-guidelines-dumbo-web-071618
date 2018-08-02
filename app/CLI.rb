@@ -103,12 +103,17 @@ end
 
 def generate_menu_of_selected_item_type item_type
   options_hash = {}
-  self.inventories.select do |inv|
-    inv.hero_id == self.id && inv.item.item_type == item_type
-  end.map do |inv|
-    inv.item
-  end.each do |item|
-    options_hash[item.name.to_sym] = item
+  if !self.inventories.empty?
+    self.inventories.select do |inv|
+      inv.hero_id == self.id && inv.item.item_type == item_type
+    end.map do |inv|
+      inv.item
+    end.each do |item|
+      options_hash[item.name.to_sym] = item
+    end
+  else
+    options_hash[:Back] = "back"
+    message = "You don't seem to have anything here."
   end
-  generate_menu options: options_hash
+  generate_menu message: message, options: options_hash
 end

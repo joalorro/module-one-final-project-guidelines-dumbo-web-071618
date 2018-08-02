@@ -7,6 +7,10 @@ class Hero < ActiveRecord::Base
   has_many :enemies, through: :fights
   # attr_accessor :name, :ap, :dp, :exp, :lvl, :inventory, :money
 
+  def money= gold
+    self.money = 0 if self.money - gold < 0
+  end
+
   ## INSTANCE METHODS ##
 
   def level_up
@@ -21,7 +25,6 @@ class Hero < ActiveRecord::Base
     rem = self.exp - limit
     if self.exp >= limit
       self.lvl += 1
-
       self.exp = rem
       inc_power if self.lvl % 2 == 0    end
     self.save
@@ -47,11 +50,9 @@ class Hero < ActiveRecord::Base
     losing_chance = 100 - winning_chance
     random_number = rand(1..100)
 
-    puts `clear`
+    #display fight encounter message
+    display_fight_encounter_msg enemy,enemy_fp,winning_chance
 
-    puts "You encounter a #{enemy.species} with the power of #{enemy_fp}"
-    puts "Your chances of winning are #{winning_chance.round(1)}%"
-    puts "Godspeed."
     # add time between the encounter and the result
     #####DELAY BEGINS#########
     i = 3
@@ -68,12 +69,18 @@ class Hero < ActiveRecord::Base
 
     if winning_chance >= random_number
       #then win
-      puts pastel.decorate("You win", :green)
+      if winning_chance < 50
+        message = pastel.decorate("Against all odds, you have slain the #{enemy.species}!", :green)
+      else
+        message = pastel.decorate("You have slain the #{enemy.species}!", :green)
+      end
+      puts message
       fight.win = true
       # apply_money_xp
     else
       #lose
-      puts pastel.decorate("You lose", :red)
+      puts pastel.decorate("You were slain by the #{enemy.species}!", :red)
+      puts "You were revived at the nearest temple."
       fight.win = false
     end
     fight.save
@@ -81,20 +88,51 @@ class Hero < ActiveRecord::Base
     level_up
   end
 
+  def display_fight_encounter_msg enemy,enemy_fp,winning_chance
+    pastel = Pastel.new
+    puts `clear`
+    message = "You encounter a"
+    message += "n" if enemy.species.downcase.start_with?("a","e","i","o","u")
+    message += pastel.decorate(" #{enemy.species}", :red)
+    message += " with the power of #{enemy_fp}!"
+    puts message
+    puts "Your chances of winning are #{winning_chance.round(1)}%"
+    puts "Godspeed, #{self.name}!"
+  end
 
   def apply_money_xp
     pastel = Pastel.new
     last_fight = Fight.last
-    money_to_be_added = rand(0..7)
-    xp_to_be_added = rand(3..7)
-    # xp_to_be_added = 50
+
+    money_to_be_added = rand(5..15)
+    xp_to_be_added = rand(6..14)
+
+    #if you lose, your rewards are reduced
+    #if your level is high enough, you start losing gold if
+    #you lose
+      if !last_fight.win
+        money_to_be_added = money_to_be_added / 3
+        xp_to_be_added = xp_to_be_added / 3
+        if self.lvl > 15
+          money_to_be_added = -money_to_be_added
+        end
+      end
+    puts end_of_fight_message money_to_be_added, xp_to_be_added
     self.money += money_to_be_added
     self.exp += xp_to_be_added
     self.save
-    puts "You gained"
-    print pastel.decorate("#{money_to_be_added} gold dragon(s)", :yellow)
-    print " and "
-    print pastel.decorate("#{xp_to_be_added} xp points.", :blue)
+  end
+
+  def end_of_fight_message money,xp
+    pastel = Pastel.new
+    fight = Fight.last
+    message = ""
+    !fight.win && self.lvl > 15 ?  message += "You lost " : message += "You gained "
+
+    message += pastel.decorate("#{money} gold dragon(s)", :yellow)
+    message += " and "
+    message += pastel.decorate("#{xp} xp points.", :blue)
+    message
   end
 
   #################FIGHT ENDS###################
@@ -150,9 +188,13 @@ class Hero < ActiveRecord::Base
   ###############################FIGHT HISTORY BEGINS###########################
   def display_fight_history
     puts `clear`
-    self.fights.each do |fight|
-      fight.win ? result = "won" : result = "lost"
-      puts "You've fought a " + fight.enemy.species.capitalize + " with the power of " + fight.fp.to_s + " and " + result + "."
+    if self.fights.length == 0
+      generate_menu message: "You haven't fought yet!", options: {Back: ""}
+    else
+      self.fights.each do |fight|
+        fight.win ? result = "won" : result = "lost"
+        puts "You fought a " + fight.enemy.species.capitalize + " with the power of " + fight.fp.to_s + " and " + result + "."
+      end
     end
   end
 
@@ -301,7 +343,7 @@ class Hero < ActiveRecord::Base
       display_stats
     else
       item_choice = generate_menu_of_selected_item_type choice
-      equip_item item_choice
+      equip_item item_choice if item_choice != "back"
     end
     update_inventory
   end
