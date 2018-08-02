@@ -16,14 +16,15 @@ class Hero < ActiveRecord::Base
     # the @exp to 0
     pastel = Pastel.new
     message = "Congratualations! You level up to #{self.lvl}!"
-    puts pastel.decorate(message, :green)
     limit = (100 * (1.3 ** (self.lvl - 1))).to_i
     rem = self.exp - limit
     if self.exp >= limit
       self.lvl += 1
       self.exp = rem
-      inc_power if self.lvl % 2 == 0    end
-    self.save
+      inc_power if self.lvl % 2 == 0
+      self.save
+      puts pastel.decorate(message, :green)
+    end
   end
 
   def inc_power
@@ -290,7 +291,7 @@ class Hero < ActiveRecord::Base
 
     if choice == "equip"
       equip_item item
-    elsif "unequip"
+    elsif choice == "unequip"
       unequip item
     end
     choice == "back" ? play_menu(self) : view_items
@@ -502,20 +503,5 @@ class Hero < ActiveRecord::Base
     end
 
     # item_to_be_sold == "back" ? shop : sell_item(item_to_be_sold)
-  end
-
-  def time
-    i = 0
-    start_time = Time.now
-    seconds = 3
-    end_time = start_time + seconds
-    str = "fighting"
-    while Time.now < end_time
-      if Time.now % 250 == 0
-        print str
-
-        str.count(".") < 5 ? str += "." : str = "fighting"
-      end
-    end
   end
 end
