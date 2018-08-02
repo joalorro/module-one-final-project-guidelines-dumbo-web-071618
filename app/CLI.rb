@@ -71,9 +71,10 @@ def play_menu(hero)
           hero.fight
           play_menu hero
         when "stats"
-            hero.display_stats
+          hero.display_stats
         when "fight_history"
-            hero.display_fight_history
+          hero.display_fight_history
+          play_menu hero
         when "inventory"
           puts `clear`
           hero.view_items
