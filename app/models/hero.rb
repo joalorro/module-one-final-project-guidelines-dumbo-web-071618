@@ -16,8 +16,8 @@ class Hero < ActiveRecord::Base
     # the @exp to 0
     pastel = Pastel.new
     message = "Congratualations! You level up to #{self.lvl}!"
-    pastel.decorate(message, :green)
-    limit = (100 * (1.2 ** (self.lvl - 1))).to_i
+    puts pastel.decorate(message, :green)
+    limit = (100 * (1.3 ** (self.lvl - 1))).to_i
     rem = self.exp - limit
     if self.exp >= limit
       self.lvl += 1
@@ -421,9 +421,21 @@ class Hero < ActiveRecord::Base
 
   def show_shop_items
     puts `clear`
-    Item.all.each do |item|
+    if self.lvl <= 5
+      tiers = 5
+    elsif self.lvl > 5 && self.lvl <= 10
+      tiers = 11
+    elsif self.lvl > 10 && self.lvl <= 15
+      tiers = 17
+    elsif self.lvl > 15
+      tiers = 29
+    end
+    available_items = Item.all[0..tiers]
+
+    available_items.each do |item|
       puts "#{item.material.capitalize} #{item.item_type.capitalize}\t \t-\t#{item.price} Gold Dragons"
     end
+    puts "These are the available items based on your combat experience."
   end
 
   def item_type
