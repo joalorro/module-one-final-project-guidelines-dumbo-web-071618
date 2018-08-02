@@ -108,15 +108,17 @@ class Hero < ActiveRecord::Base
     pastel = Pastel.new
     last_fight = Fight.last
 
-    money_to_be_added = rand(5..15) * (1.2 * self.lvl)
-    xp_to_be_added = rand(6..14) * (1.2 * self.lvl)
+    formula = rand(5..15) * (1.1 ** self.lvl)
+
+    money_to_be_added = formula
+    xp_to_be_added = formula
 
     #if you lose, your rewards are reduced
     #if your level is high enough, you start losing gold if
     #you lose
     if !last_fight.win
-      money_to_be_added = money_to_be_added / 3
-      xp_to_be_added = xp_to_be_added / 3
+      money_to_be_added = money_to_be_added / 4
+
       if self.lvl > 15
         if self.money - money_to_be_added < 0
           self.money = 0
@@ -127,6 +129,7 @@ class Hero < ActiveRecord::Base
         self.money += money_to_be_added.to_i
       end
     else
+      xp_to_be_added = xp_to_be_added / 2
       self.money += money_to_be_added.round.to_i
     end
     puts end_of_fight_message money_to_be_added.round, xp_to_be_added.round
@@ -196,6 +199,7 @@ class Hero < ActiveRecord::Base
   end
 
   ################ END STATS ########################
+
   ###############################FIGHT HISTORY BEGINS###########################
   def display_fight_history
     puts `clear`
