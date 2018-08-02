@@ -232,13 +232,13 @@ class Hero < ActiveRecord::Base
         pastel.decorate(el, :bold, :blue)
       end
       table = TTY::Table.new [arr]
-      self.fights.each do |fight|
+      self.fights.reverse.each do |fight|
         death_count += 1 if !fight.win?
         fight.win ? result = pastel.decorate("Victory", :green) : result = pastel.decorate("Defeat", :red)
-        table << [fight.enemy.species.capitalize, "    " + fight.enemy.tier.to_s, "     " + fight.fp.to_s, result, Time.now.to_s[0..9]]
+        table << [fight.enemy.species.capitalize, "    " + fight.enemy.tier.to_s, "     " + fight.fp.to_s, result, "  " + Time.now.to_s[0..9]]
         # puts "You fought a " + fight.enemy.species.capitalize + " with the power of " + fight.fp.to_s + " and " + result + "."
       end
-      puts table.render(:ascii)
+      puts table.render(:ascii, alignments: :center)
     end
     colored_death_count = pastel.decorate("#{death_count} times",:red)
     puts "In summary, out of #{self.fights.length} fights, you have died #{colored_death_count}!"
@@ -426,6 +426,7 @@ class Hero < ActiveRecord::Base
   private
 
   def show_shop_items
+    pastel = Pastel.new
     puts `clear`
     if self.lvl <= 5
       tiers = 5
@@ -437,10 +438,12 @@ class Hero < ActiveRecord::Base
       tiers = 29
     end
     available_items = Item.all[0..tiers]
-
+    table = TTY::Table.new [[pastel.decorate("Name", :blue), pastel.decorate("     Price", :blue)]]
     available_items.each do |item|
-      puts "#{item.material.capitalize} #{item.item_type.capitalize}\t \t-\t#{item.price} Gold Dragons"
+      table << [item.name.capitalize, pastel.decorate("#{item.price} gold dragons", :yellow)]
+      # puts "#{item.material.capitalize} #{item.item_type.capitalize}\t \t-\t#{item.price} Gold Dragons"
     end
+    puts table.render(:ascii, alignments: :center)
     puts "These are the available items based on your combat experience."
   end
 
