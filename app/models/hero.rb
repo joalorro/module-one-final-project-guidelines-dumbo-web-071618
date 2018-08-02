@@ -225,15 +225,20 @@ class Hero < ActiveRecord::Base
     puts `clear`
     death_count = 0
     pastel = Pastel.new
-
     if self.fights.length == 0
       generate_menu message: "You haven't fought yet!", options: {Back: ""}
     else
+      arr = ["Enemy Species", "Enemy Tier", "Enemy's Power", "Result", "Date of Battle"].map do |el|
+        pastel.decorate(el, :bold, :blue)
+      end
+      table = TTY::Table.new [arr]
       self.fights.each do |fight|
         death_count += 1 if !fight.win?
-        fight.win ? result = "won" : result = "lost"
-        puts "You fought a " + fight.enemy.species.capitalize + " with the power of " + fight.fp.to_s + " and " + result + "."
+        fight.win ? result = pastel.decorate("Victory", :green) : result = pastel.decorate("Defeat", :red)
+        table << [fight.enemy.species.capitalize, "    " + fight.enemy.tier.to_s, "     " + fight.fp.to_s, result, Time.now.to_s[0..9]]
+        # puts "You fought a " + fight.enemy.species.capitalize + " with the power of " + fight.fp.to_s + " and " + result + "."
       end
+      puts table.render(:ascii)
     end
     colored_death_count = pastel.decorate("#{death_count} times",:red)
     puts "In summary, out of #{self.fights.length} fights, you have died #{colored_death_count}!"
