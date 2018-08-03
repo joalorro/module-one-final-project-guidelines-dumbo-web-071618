@@ -1,49 +1,17 @@
-# Module One Final Project Guidelines
+#Module ONE Final Project#
 
-Congratulations, you're at the end of module one! You've worked crazy hard to get here and have learned a ton.
+For our project in the 3rd week of our 15-week web development bootcamp at Flatiron School, we developed a text-based RPG in Ruby that combines features of a traditional RPG with the chance-based combat mechanics of Risk (the board game). Our inspiration was to break the mold of traditional RPG's and have fun in making something that was fun and weird.
 
-For your final project, we'll be building a Command Line database application.
+Without equipment, your chances of winning fight is incredibly low so in order to progress through the levels, one must purchase gear from the shop defeat enemies and look to purchase more advanced equipment. As you level up, you unlock tiers of available equipment and you start encountering higher level opponents. The goal of the game is to defeat the five boss characters that have been terrorizing the land. Installation instructions below (you can skip the next paragraph to find the instructions).
 
-## Project Requirements
+# Welcome to AMISUE'S (pronounced: AM-I-SWAY) ADVENTURE QUEST TIME 2: THE WRATH OF THE FIVE WARLORDS, THE MINIONS OF DARKNESS *ULTRA SUPER DELUXE TEXT EDITION* #
 
-### Option One - Data Analytics Project
+Welcome, weary traveller. These are bleak times as we must face the treachery of the wicked and  those who wish doom upon the limited expanse of the current plain of existence. My name is Jogovir, I am the last of this realm's guardians and I task myself with the quest of finding the true heroes who will save this world and its people! If you will, might I assist thee? Capital! If you will, follow these steps before embarking on thine journey:
 
-1. Access a Sqlite3 Database using ActiveRecord.
-2. You should have at minimum three models including one join model. This means you must have a many-to-many relationship.
-3. You should seed your database using data that you collect either from a CSV, a website by scraping, or an API.
-4. Your models should have methods that answer interesting questions about the data. For example, if you've collected info about movie reviews, what is the most popular movie? What movie has the most reviews?
-5. You should provide a CLI to display the return values of your interesting methods.  
-6. Use good OO design patterns. You should have separate classes for your models and CLI interface.
-
-### Option Two - Command Line CRUD App
-
-1. Access a Sqlite3 Database using ActiveRecord.
-2. You should have a minimum of three models.
-3. You should build out a CLI to give your user full CRUD ability for at least one of your resources. For example, build out a command line To-Do list. A user should be able to create a new to-do, see all todos, update a todo item, and delete a todo. Todos can be grouped into categories, so that a to-do has many categories and categories have many to-dos.
-4. Use good OO design patterns. You should have separate models for your runner and CLI interface.
-
-### Brainstorming and Proposing a Project Idea
-
-Projects need to be approved prior to launching into them, so take some time to brainstorm project options that will fulfill the requirements above.  You must have a minimum of four [user stories](https://en.wikipedia.org/wiki/User_story) to help explain how a user will interact with your app.  A user story should follow the general structure of `"As a <role>, I want <goal/desire> so that <benefit>"`. In example, if we were creating an app to randomly choose nearby restaurants on Yelp, we might write:
-
-* As a user, I want to be able to enter my name to retrieve my records
-* As a user, I want to enter a location and be given a random nearby restaurant suggestion
-* As a user, I should be able to reject a suggestion and not see that restaurant suggestion again
-* As a user, I want to be able to save to and retrieve a list of favorite restaurant suggestions
-
-## Instructions
-
-1. Fork and clone this repository.
-2. Build your application. Make sure to commit early and commit often. Commit messages should be meaningful (clearly describe what you're doing in the commit) and accurate (there should be nothing in the commit that doesn't match the description in the commit message). Good rule of thumb is to commit every 3-7 mins of actual coding time. Most of your commits should have under 15 lines of code and a 2 line commit is perfectly acceptable.
-3. Make sure to create a good README.md with a short description, install instructions, a contributors guide and a link to the license for your code.
-4. Make sure your project checks off each of the above requirements.
-5. Prepare a video demo (narration helps!) describing how a user would interact with your working project.
-    * The video should:
-      - Have an overview of your project.(2 minutes max)
-6. Prepare a presentation to follow your video.(3 minutes max)
-    * Your presentation should:
-      - Describe something you struggled to build, and show us how you ultimately implemented it in your code.
-      - Discuss 3 things you learned in the process of working on this project.
-      - Address, if anything, what you would change or add to what you have today?
-      - Present any code you would like to highlight.   
-7. *OPTIONAL, BUT RECOMMENDED*: Write a blog post about the project and process.
+  1. In your (primitive) console, enter these commands:
+    - bundle install
+    - rake db:migrate
+    - rake db:seed
+  2. Enter thine desired (user?)name
+  3. Immortalize your title as a hero
+  4. Begin questing towards the salvation of this realm!
