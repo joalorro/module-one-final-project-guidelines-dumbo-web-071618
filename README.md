@@ -13,6 +13,7 @@ In the console, run:
 - bundle install
 - rake db:migrate
 - rake db:seed
+- ruby bin/run.rb
 
 ## Built With
 
