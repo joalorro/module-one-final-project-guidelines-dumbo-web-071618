@@ -15,25 +15,16 @@ class Hero < ActiveRecord::Base
     # current @exp and the threshold and add it to the @exp value after leveling up & restarting
     # the @exp to 0
     pastel = Pastel.new
-<<<<<<< HEAD
-=======
     message = "Congratualations! You level up to #{self.lvl}!"
->>>>>>> 4bd3797ed12706e4709fe0016a9f31dd068676d5
     limit = (100 * (1.3 ** (self.lvl - 1))).to_i
     rem = self.exp - limit
     if self.exp >= limit
       self.lvl += 1
       self.exp = rem
       inc_power if self.lvl % 2 == 0
-<<<<<<< HEAD
-      puts pastel.decorate("Congratualations! You level up to #{self.lvl}!", :green)
-    end
-    self.save
-=======
       self.save
       puts pastel.decorate(message, :green)
     end
->>>>>>> 4bd3797ed12706e4709fe0016a9f31dd068676d5
   end
 
   def inc_power
@@ -311,7 +302,6 @@ class Hero < ActiveRecord::Base
       unequip item
     end
     choice == "back" ? play_menu(self) : view_items
-
   end
 
   ################## END INVENTORY #######################
@@ -321,7 +311,6 @@ class Hero < ActiveRecord::Base
   def equip_item item
     inv_instance = self.inventories.find_by item_id: item.id #=> inventory instance that matches the item
     #Unequip the item of the same item_type
-
     item_to_be_unequipped = self.inventories.find do |inv|
       inv_instance.id != inv.id && inv_instance.item.item_type == inv.item.item_type
     end
@@ -414,9 +403,7 @@ class Hero < ActiveRecord::Base
   def shop
     show_shop_items
     puts "You have: #{self.money} gold dragons."
-
     choice = generate_menu message: "How can I help you?", options: {Buy: "buy",Sell: "sell", Back: "back"}
-
     case choice
       when "buy"
         show_shop_items
@@ -450,7 +437,6 @@ class Hero < ActiveRecord::Base
     end
     available_items = Item.all[0..tiers]
   end
-
   def show_shop_items
     pastel = Pastel.new
     puts `clear`
@@ -484,13 +470,11 @@ class Hero < ActiveRecord::Base
       puts `clear`
       puts "Sorry, you can't afford this."
       puts "You need #{item.price - self.money} more gold dragons in order to purchase this #{item.name}."
-<<<<<<< HEAD
-      sleep(1)
-=======
+
     elsif !available_items.include?(item)
       puts `clear`
       puts "Sorry, the item you're trying to purchase is not available for your level!"
->>>>>>> 4bd3797ed12706e4709fe0016a9f31dd068676d5
+
     else
       inv_instance = Inventory.create
       inv_instance.hero = self
@@ -534,8 +518,4 @@ class Hero < ActiveRecord::Base
     end
     # item_to_be_sold == "back" ? shop : sell_item(item_to_be_sold)
   end
-<<<<<<< HEAD
 end
-=======
-end
->>>>>>> 4bd3797ed12706e4709fe0016a9f31dd068676d5

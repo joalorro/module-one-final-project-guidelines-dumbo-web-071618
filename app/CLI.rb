@@ -29,7 +29,11 @@ def login
       user = User.find_by name: name
     end
     # binding.pry
-    hero = user.hero
+    if !user.hero.nil?
+      hero = user.hero
+    else
+      hero = new_hero user.id
+    end
     hero
 end
 
@@ -56,35 +60,70 @@ end
 
 def play_menu(hero)
     hero = Hero.find(hero.id)
-    prompt = TTY::Prompt.new
-    i = prompt.select("Welcome, #{hero.name}.") do |menu|
-        menu.choices  Fight: "fight",
-                      "Fight History" => "fight_history",
-                      Stats: "stats",
-                      Inventory: "inventory",
-                      Shop: "shop",
-                      "Sign Out" => "exit"
+    choice = generate_menu  message:"Welcome, #{hero.name}.",
+                            options: {
+                  Fight: "fight",
+                  "Fight History" => "fight_history",
+                  Stats: "stats",
+                  Inventory: "inventory",
+                  Shop: "shop",
+                  Options: "options",
+                  "Sign Out" => "exit"
+                }
+    case choice
+      when "fight"
+        hero.fight_enemy
+        play_menu hero
+      when "stats"
+        hero.display_stats
+      when "fight_history"
+        puts `clear`
+        hero.display_fight_history
+        play_menu hero
+      when "inventory"
+        puts `clear`
+        hero.view_items
+      when "shop"
+        puts `clear`
+        hero.shop
+      when "options"
+        puts `clear`
+        options_menu hero
+      when "exit"
+        main
     end
+end
 
-    case i
-        when "fight"
-          hero.fight_enemy
-          play_menu hero
-        when "stats"
-          hero.display_stats
-        when "fight_history"
-          puts `clear`
-          hero.display_fight_history
-          play_menu hero
-        when "inventory"
-          puts `clear`
-          hero.view_items
-        when "shop"
-          puts `clear`
-          hero.shop
-        when "exit"
-          main
-    end
+def options_menu hero
+  choice = generate_menu options: {
+    "Rename Hero" => "rename",
+    "Delete hero" => "delete",
+    Back: "back"
+  }
+  case choice
+  when "rename"
+    rename_hero hero
+    play_menu hero
+  when "delete"
+    delete_hero hero
+    main
+  when "back"
+    play_menu hero
+  end
+end
+
+def rename_hero hero
+  puts "What would you like to rename your hero?"
+  name = gets.chomp
+  hero.name = name
+  hero.save
+  puts `clear`
+end
+
+def delete_hero hero
+  puts `clear`
+  puts "#{hero.name} has been successfully deleted."
+  Hero.delete hero
 end
 
 def generate_menu menu_hash
