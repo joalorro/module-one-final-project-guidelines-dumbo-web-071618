@@ -15,14 +15,14 @@ class Hero < ActiveRecord::Base
     # current @exp and the threshold and add it to the @exp value after leveling up & restarting
     # the @exp to 0
     pastel = Pastel.new
-    message = "Congratualations! You level up to #{self.lvl}!"
-    puts pastel.decorate(message, :green)
     limit = (100 * (1.3 ** (self.lvl - 1))).to_i
     rem = self.exp - limit
     if self.exp >= limit
       self.lvl += 1
       self.exp = rem
-      inc_power if self.lvl % 2 == 0    end
+      inc_power if self.lvl % 2 == 0
+      puts pastel.decorate("Congratualations! You level up to #{self.lvl}!", :green)
+    end
     self.save
   end
 
@@ -86,15 +86,17 @@ class Hero < ActiveRecord::Base
       tiers = 5
     elsif self.lvl > 5 && self.lvl <= 10
       tiers = 10
-    elsif self.lvl > 10 && self.lvl <= 15
+    elsif self.lvl > 10
       tiers = 15
+    elsif self.lvl > 15
+      tiers = 20
     end
-    Enemy.find(rand(1..tiers))
+    random_id = rand(1..tiers)
+    Enemy.find(random_id)
   end
 
   def calculate_winning_chance enemy
     #Establish fight powers of both the hero and the enemy
-
     base = ((self.lvl.to_f + 10.0 ) / 2.0)
 
     base_fp = (base * 2)
@@ -174,7 +176,7 @@ class Hero < ActiveRecord::Base
 
   def display_stats
     puts `clear`
-    limit = (100 * (1.2 ** (self.lvl - 1))).to_i
+    limit = (100 * (1.3 ** (self.lvl - 1))).to_i
 
     puts "Name: #{self.name}"
     puts "Level: #{self.lvl}"
@@ -316,6 +318,7 @@ class Hero < ActiveRecord::Base
     end
     puts `clear`
     puts "You equip your #{inv_instance.item.name}"
+    sleep(1)
     update_inventory
   end
 
@@ -353,6 +356,7 @@ class Hero < ActiveRecord::Base
     else
       puts "bruh, you weren't wearing that"
     end
+    sleep(1)
     inv.save
     update_inventory
   end
@@ -368,6 +372,7 @@ class Hero < ActiveRecord::Base
     self.save
     update_inventory
     puts "You unequip everything."
+    sleep(1)
   end
 
   def get_equipped_objects
@@ -423,9 +428,9 @@ class Hero < ActiveRecord::Base
     puts `clear`
     if self.lvl <= 5
       tiers = 5
-    elsif self.lvl > 5 && self.lvl <= 10
+    elsif self.lvl > 5
       tiers = 11
-    elsif self.lvl > 10 && self.lvl <= 15
+    elsif self.lvl > 10
       tiers = 17
     elsif self.lvl > 15
       tiers = 29
@@ -460,6 +465,7 @@ class Hero < ActiveRecord::Base
       puts `clear`
       puts "Sorry, you can't afford this."
       puts "You need #{item.price - self.money} more gold dragons in order to purchase this #{item.name}."
+      sleep(1)
     else
       inv_instance = Inventory.create
       inv_instance.hero = self
@@ -469,8 +475,8 @@ class Hero < ActiveRecord::Base
       inv_instance.save
       self.save
       puts `clear`
-      puts "Thank you for your custom."
       puts "#{item.name} was added to your inventory."
+      sleep(1)
     end
   end
 
@@ -489,6 +495,7 @@ class Hero < ActiveRecord::Base
     puts `clear`
 
     puts "You have sold 1 #{item.name} for #{sell_value} gold dragons."
+    sleep(1)
   end
 
   def view_inventory_for_selling
@@ -500,22 +507,6 @@ class Hero < ActiveRecord::Base
       choice = generate_menu message: "It seems your inventory is empty",options: {Back: "back"}
       shop
     end
-
     # item_to_be_sold == "back" ? shop : sell_item(item_to_be_sold)
-  end
-
-  def time
-    i = 0
-    start_time = Time.now
-    seconds = 3
-    end_time = start_time + seconds
-    str = "fighting"
-    while Time.now < end_time
-      if Time.now % 250 == 0
-        print str
-
-        str.count(".") < 5 ? str += "." : str = "fighting"
-      end
-    end
   end
 end

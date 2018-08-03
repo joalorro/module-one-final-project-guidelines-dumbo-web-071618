@@ -8,7 +8,7 @@ giant_spider = Enemy.create(species: "Giant Spider", tier: 1)
 
 #Tier 2
 
-uruk_hai = Enemy.create(species: "Uruk-hai", tier: 2)
+uruk_hai = Enemy.create(species: "Uruk-hai Warrior", tier: 2)
 dark_elf = Enemy.create(species: "Dark Elf", tier: 2)
 wight = Enemy.create(species: "Wight", tier: 2)
 hell_hound = Enemy.create(species: "Hell Hound", tier: 2)
@@ -21,12 +21,12 @@ rock_elemental = Enemy.create(species: "Rock Elemental", tier: 3)
 dragon_priest = Enemy.create(species: "Dragon Priest", tier: 3)
 demon = Enemy.create(species: "Demon", tier: 3)
 
-#Tier 4
-# dragon = Enemy.create(species: "Dragon", tier: 4)
-# balrog = Enemy.create(species: "Balrog", tier: 4)
-# lava_golem = Enemy.create(species: "Lava Golem", tier: 4)
-# hydra = Enemy.create(species: "Hydra", tier: 4)
-# cerberus = Enemy.create(species: "Cerberus", tier: 4)
+# Tier 4
+dragon = Enemy.create(species: "Dragon", tier: 4)
+balrog = Enemy.create(species: "Balrog", tier: 4)
+lava_golem = Enemy.create(species: "Lava Golem", tier: 4)
+hydra = Enemy.create(species: "Hydra", tier: 4)
+cerberus = Enemy.create(species: "Cerberus", tier: 4)
 
 #Weapon Seeds
 #type,point_value,price, material
