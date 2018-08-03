@@ -1,4 +1,4 @@
-##
+#
 
 For our project in the 3rd week of our 15-week web development bootcamp at Flatiron School, we developed a text-based RPG in Ruby that combines features of a traditional RPG with the chance-based combat mechanics of Risk (the board game). Our inspiration was to break the mold of traditional RPG's and have fun in making something that was fun and unconventional.
 
