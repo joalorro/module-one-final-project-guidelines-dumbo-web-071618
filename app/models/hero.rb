@@ -398,19 +398,18 @@ class Hero < ActiveRecord::Base
 
   ############ SHOPPING FUNCTIONS #########################
   def shop
+    show_shop_items
     puts "You have: #{self.money} gold dragons."
 
-    choice = generate_menu message: "How can I help you?", options: {Buy: "buy",Sell: "sell","View Stock" => "view", Back: "back"}
+    choice = generate_menu message: "How can I help you?", options: {Buy: "buy",Sell: "sell", Back: "back"}
 
     case choice
       when "buy"
+        show_shop_items
         item_type
       when "sell"
         puts `clear`
         view_inventory_for_selling
-      when "view"
-        puts `clear`
-        show_shop_items
       when "back"
         puts `clear`
         play_menu self
@@ -448,7 +447,6 @@ class Hero < ActiveRecord::Base
   end
 
   def item_type
-    puts `clear`
 
     choice = generate_menu message: "What would you like to purchase?", options: {Swords: "sword", Shields: "shield", Armor: "armor", Boots: "boots", Gauntlets: "gauntlets", Helmets: "helmet", Back: "back"}
 
