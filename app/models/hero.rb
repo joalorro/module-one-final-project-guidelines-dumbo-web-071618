@@ -424,9 +424,7 @@ class Hero < ActiveRecord::Base
   ## PRIVATE METHODS ##
   private
 
-  def show_shop_items
-    pastel = Pastel.new
-    puts `clear`
+  def available_items
     if self.lvl <= 5
       tiers = 5
     elsif self.lvl > 5 && self.lvl <= 10
@@ -437,6 +435,11 @@ class Hero < ActiveRecord::Base
       tiers = 29
     end
     available_items = Item.all[0..tiers]
+  end
+
+  def show_shop_items
+    pastel = Pastel.new
+    puts `clear`
     table = TTY::Table.new [[pastel.decorate("Name", :blue), pastel.decorate("     Price", :blue)]]
     available_items.each do |item|
       table << [item.name.capitalize, pastel.decorate("#{item.price} gold dragons", :yellow)]
@@ -467,6 +470,9 @@ class Hero < ActiveRecord::Base
       puts `clear`
       puts "Sorry, you can't afford this."
       puts "You need #{item.price - self.money} more gold dragons in order to purchase this #{item.name}."
+    elsif !available_items.include?(item)
+      puts `clear`
+      puts "Sorry, the item you're trying to purchase is not available for your level!"
     else
       inv_instance = Inventory.create
       inv_instance.hero = self
