@@ -15,15 +15,25 @@ class Hero < ActiveRecord::Base
     # current @exp and the threshold and add it to the @exp value after leveling up & restarting
     # the @exp to 0
     pastel = Pastel.new
+<<<<<<< HEAD
+=======
+    message = "Congratualations! You level up to #{self.lvl}!"
+>>>>>>> 4bd3797ed12706e4709fe0016a9f31dd068676d5
     limit = (100 * (1.3 ** (self.lvl - 1))).to_i
     rem = self.exp - limit
     if self.exp >= limit
       self.lvl += 1
       self.exp = rem
       inc_power if self.lvl % 2 == 0
+<<<<<<< HEAD
       puts pastel.decorate("Congratualations! You level up to #{self.lvl}!", :green)
     end
     self.save
+=======
+      self.save
+      puts pastel.decorate(message, :green)
+    end
+>>>>>>> 4bd3797ed12706e4709fe0016a9f31dd068676d5
   end
 
   def inc_power
@@ -226,15 +236,20 @@ class Hero < ActiveRecord::Base
     puts `clear`
     death_count = 0
     pastel = Pastel.new
-
     if self.fights.length == 0
       generate_menu message: "You haven't fought yet!", options: {Back: ""}
     else
-      self.fights.each do |fight|
-        death_count += 1 if !fight.win?
-        fight.win ? result = "won" : result = "lost"
-        puts "You fought a " + fight.enemy.species.capitalize + " with the power of " + fight.fp.to_s + " and " + result + "."
+      arr = ["Enemy Species", "Enemy Tier", "Enemy's Power", "Result", "Date of Battle"].map do |el|
+        pastel.decorate(el, :bold, :blue)
       end
+      table = TTY::Table.new [arr]
+      self.fights.reverse.each do |fight|
+        death_count += 1 if !fight.win?
+        fight.win ? result = pastel.decorate("Victory", :green) : result = pastel.decorate("Defeat", :red)
+        table << [fight.enemy.species.capitalize, "    " + fight.enemy.tier.to_s, "     " + fight.fp.to_s, result, "  " + Time.now.to_s[0..9]]
+        # puts "You fought a " + fight.enemy.species.capitalize + " with the power of " + fight.fp.to_s + " and " + result + "."
+      end
+      puts table.render(:ascii, alignments: :center)
     end
     colored_death_count = pastel.decorate("#{death_count} times",:red)
     puts "In summary, out of #{self.fights.length} fights, you have died #{colored_death_count}!"
@@ -292,7 +307,7 @@ class Hero < ActiveRecord::Base
 
     if choice == "equip"
       equip_item item
-    elsif "unequip"
+    elsif choice == "unequip"
       unequip item
     end
     choice == "back" ? play_menu(self) : view_items
@@ -397,19 +412,18 @@ class Hero < ActiveRecord::Base
 
   ############ SHOPPING FUNCTIONS #########################
   def shop
+    show_shop_items
     puts "You have: #{self.money} gold dragons."
 
-    choice = generate_menu message: "How can I help you?", options: {Buy: "buy",Sell: "sell","View Stock" => "view", Back: "back"}
+    choice = generate_menu message: "How can I help you?", options: {Buy: "buy",Sell: "sell", Back: "back"}
 
     case choice
       when "buy"
+        show_shop_items
         item_type
       when "sell"
         puts `clear`
         view_inventory_for_selling
-      when "view"
-        puts `clear`
-        show_shop_items
       when "back"
         puts `clear`
         play_menu self
@@ -424,8 +438,7 @@ class Hero < ActiveRecord::Base
   ## PRIVATE METHODS ##
   private
 
-  def show_shop_items
-    puts `clear`
+  def available_items
     if self.lvl <= 5
       tiers = 5
     elsif self.lvl > 5
@@ -436,15 +449,21 @@ class Hero < ActiveRecord::Base
       tiers = 29
     end
     available_items = Item.all[0..tiers]
+  end
 
+  def show_shop_items
+    pastel = Pastel.new
+    puts `clear`
+    table = TTY::Table.new [[pastel.decorate("Name", :blue), pastel.decorate("     Price", :blue)]]
     available_items.each do |item|
-      puts "#{item.material.capitalize} #{item.item_type.capitalize}\t \t-\t#{item.price} Gold Dragons"
+      table << [item.name.capitalize, pastel.decorate("#{item.price} gold dragons", :yellow)]
+      # puts "#{item.material.capitalize} #{item.item_type.capitalize}\t \t-\t#{item.price} Gold Dragons"
     end
+    puts table.render(:ascii, alignments: :center)
     puts "These are the available items based on your combat experience."
   end
 
   def item_type
-    puts `clear`
 
     choice = generate_menu message: "What would you like to purchase?", options: {Swords: "sword", Shields: "shield", Armor: "armor", Boots: "boots", Gauntlets: "gauntlets", Helmets: "helmet", Back: "back"}
 
@@ -465,7 +484,13 @@ class Hero < ActiveRecord::Base
       puts `clear`
       puts "Sorry, you can't afford this."
       puts "You need #{item.price - self.money} more gold dragons in order to purchase this #{item.name}."
+<<<<<<< HEAD
       sleep(1)
+=======
+    elsif !available_items.include?(item)
+      puts `clear`
+      puts "Sorry, the item you're trying to purchase is not available for your level!"
+>>>>>>> 4bd3797ed12706e4709fe0016a9f31dd068676d5
     else
       inv_instance = Inventory.create
       inv_instance.hero = self
@@ -509,4 +534,8 @@ class Hero < ActiveRecord::Base
     end
     # item_to_be_sold == "back" ? shop : sell_item(item_to_be_sold)
   end
+<<<<<<< HEAD
 end
+=======
+end
+>>>>>>> 4bd3797ed12706e4709fe0016a9f31dd068676d5
