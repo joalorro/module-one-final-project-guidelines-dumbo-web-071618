@@ -102,9 +102,9 @@ class Hero < ActiveRecord::Base
 
   def calculate_winning_chance enemy
     #Establish fight powers of both the hero and the enemy
-    base = (self.lvl.to_f + 10.0 ) / 2.0
+    base = (self.lvl.to_f + 10.0) / 1.33
 
-    enemy_fp = ((rand(100..400)/100.0) * base * (1.5 ** enemy.tier)).round(2)
+    enemy_fp = ((rand(150..420)/100.0) * base * (1.5 ** enemy.tier)).round(2)
 
     adjusted_hero_fp = (2.0/3.0) * self.ap.to_f + (1.0/3.0) * self.dp.to_f
 
