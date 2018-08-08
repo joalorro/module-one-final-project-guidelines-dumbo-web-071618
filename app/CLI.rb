@@ -17,6 +17,7 @@ def main
 end
 
 def login
+    pastel = Pastel.new
     puts "Please enter your username"
     name = gets.chomp
     name = name.downcase
@@ -34,6 +35,28 @@ def login
     else
       hero = new_hero user.id
     end
+
+    i = 0.0
+    str = "Traversing the multi-verse"
+    loop do
+      if i == 2 || i == 5
+        print pastel.decorate(str,:magenta) + "." * i + "\r"
+      elsif i == 1 || i == 4
+        print pastel.decorate(str,:bright_black) + "." * i + "\r"
+      elsif i == 3
+        print pastel.decorate(str,:cyan) + "." * i + "\r"
+      else
+        j = rand(1..3)
+        print pastel.decorate(str,:yellow) + "." * i + "\r" if j == 1
+        print pastel.decorate(str,:red) + "." * i + "\r" if j == 2
+        print pastel.decorate(str,:green) + "." * i + "\r" if j == 3
+      end
+      $stdout.flush
+      i += 0.5
+      sleep 0.5
+      break if i == 6
+    end
+    puts `clear`
     hero
 end
 
@@ -60,7 +83,7 @@ end
 
 def play_menu(hero)
     hero = Hero.find(hero.id)
-    choice = generate_menu  message:"Welcome, #{hero.name}.",
+    choice = generate_menu  message:"#{hero.name}..",
                             options: {
                   Fight: "fight",
                   "Fight History" => "fight_history",
@@ -158,3 +181,7 @@ def generate_menu_of_selected_item_type item_type
   end
   generate_menu message: message, options: options_hash
 end
+
+def delay
+
+end 

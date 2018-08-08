@@ -15,11 +15,11 @@ class Hero < ActiveRecord::Base
     # current @exp and the threshold and add it to the @exp value after leveling up & restarting
     # the @exp to 0
     pastel = Pastel.new
-    message = "Congratualations! You level up to #{self.lvl}!"
     limit = (100 * (1.3 ** (self.lvl - 1))).to_i
     rem = self.exp - limit
     if self.exp >= limit
       self.lvl += 1
+      message = "Congratualations! You level up to #{self.lvl}!"
       self.exp = rem
       inc_power if self.lvl % 2 == 0
       self.save
@@ -80,32 +80,36 @@ class Hero < ActiveRecord::Base
     apply_money_xp
     self.money = Hero.find(self.id).money
     level_up
+
+    defeat_boss enemy if enemy.id >= 16 && self.fights.last.win == true
+
   end
 
   def generate_enemy
-    if self.lvl <= 5
-      tiers = 5
-    elsif self.lvl > 5 && self.lvl <= 10
-      tiers = 10
+    if self.lvl > 15
+      last_available_id = 20
     elsif self.lvl > 10
-      tiers = 15
-    elsif self.lvl > 15
-      tiers = 20
+      last_available_id = 15
+    elsif self.lvl > 5
+      last_available_id = 10
+    elsif self.lvl <= 5
+      last_available_id = 5
     end
-    random_id = rand(1..tiers)
+
+    random_id = rand(1..last_available_id)
     Enemy.find(random_id)
   end
 
   def calculate_winning_chance enemy
     #Establish fight powers of both the hero and the enemy
-    base = ((self.lvl.to_f + 10.0 ) / 2.0)
+    base = (self.lvl.to_f + 10.0 ) / 2.0
 
-    base_fp = (base * 2)
-    enemy_fp = ((rand(100..400)/100.0) * base_fp * (1.5 ** enemy.tier)).round(2)
+    enemy_fp = ((rand(100..400)/100.0) * base * (1.5 ** enemy.tier)).round(2)
 
     adjusted_hero_fp = (2.0/3.0) * self.ap.to_f + (1.0/3.0) * self.dp.to_f
 
     new_fight = Fight.create(hero_id: self.id, enemy_id: enemy.id, fp: enemy_fp)
+    adjusted_hero_fp = adjusted_hero_fp * 0.75 if enemy.id >= 16
     winning_chance = (adjusted_hero_fp/(adjusted_hero_fp + enemy_fp)) * 100
 
     #display fight encounter message
@@ -117,13 +121,60 @@ class Hero < ActiveRecord::Base
   def display_fight_encounter_msg enemy,enemy_fp,winning_chance
     pastel = Pastel.new
     puts `clear`
-    message = "You encounter a"
-    message += "n" if enemy.species.downcase.start_with?("a","e","i","o","u")
-    message += pastel.decorate(" #{enemy.species}", :red)
-    message += " with the power of #{enemy_fp}!"
-    puts message
-    puts "Your chances of winning are #{winning_chance.round(1)}%"
-    puts "Godspeed, #{self.name}!"
+    if enemy.id < 16
+      message = "You encounter a"
+      message += "n" if enemy.species.downcase.start_with?("a","e","i","o","u")
+      message += pastel.decorate(" #{enemy.species}", :red)
+      message += " with the power of #{enemy_fp}!"
+      puts message
+      puts "Your chances of winning are #{winning_chance.round(1)}%"
+      puts "Godspeed, #{self.name}!"
+    else
+      str = ""
+      i = 0.0
+      loop do
+        print str + "." * i + "\r"
+        $stdout.flush
+        i += 0.5
+        sleep 0.5
+        break if i == 5
+      end
+      msg = "The malevolent "
+      msg += pastel.decorate("#{enemy.species}", :on_bright_red)
+      msg += " appears."
+      puts msg
+      i = 0.0
+      loop do
+        print str + "." * i + "\r"
+        $stdout.flush
+        i += 0.5
+        sleep 0.5
+        break if i == 4
+      end
+
+      puts "You must not waver. The fate of the realm is in your hands."
+
+      i = 0.0
+      loop do
+        print str + "." * i + "\r"
+        $stdout.flush
+        i += 0.5
+        sleep 0.5
+        break if i == 6
+      end
+
+      puts "May the godesses smile down upon us all."
+
+      i = 0.0
+      loop do
+        print str + "." * i + "\r"
+        $stdout.flush
+        i += 0.5
+        sleep 0.5
+        break if i == 6
+      end
+
+    end
   end
 
   def apply_money_xp
@@ -169,6 +220,17 @@ class Hero < ActiveRecord::Base
     message += " and "
     message += pastel.decorate("#{xp} xp points.", :blue)
     message
+  end
+
+  def defeat_boss boss
+    pastel = Pastel.new
+    # Enemy.delete boss
+    msg = pastel.decorate("HUZZAH!! ", :green)
+    msg += "THE WICKED "
+    msg += pastel.decorate("#{boss.species}", :on_bright_red)
+    msg += " has been defeated! "
+    msg += "This realm is forever in you debt!"
+    puts msg
   end
 
   #################FIGHT ENDS###################
@@ -376,7 +438,7 @@ class Hero < ActiveRecord::Base
     self.save
     update_inventory
     puts "You unequip everything."
-    sleep(1)
+    sleep 2
   end
 
   def get_equipped_objects
@@ -426,16 +488,16 @@ class Hero < ActiveRecord::Base
   private
 
   def available_items
-    if self.lvl <= 5
-      tiers = 5
-    elsif self.lvl > 5
-      tiers = 11
+    if self.lvl > 15
+      ids = 29
     elsif self.lvl > 10
-      tiers = 17
-    elsif self.lvl > 15
-      tiers = 29
+      ids = 17
+    elsif self.lvl > 5
+      ids = 11
+    elsif self.lvl <= 5
+      ids = 5
     end
-    available_items = Item.all[0..tiers]
+    available_items = Item.all[0..ids]
   end
   def show_shop_items
     pastel = Pastel.new
@@ -458,7 +520,12 @@ class Hero < ActiveRecord::Base
   end
 
   def material_menu choice
-    material = generate_menu message: "Material Type:", options: {Wood: "wood", Steel: "steel", Adamantium: "adamantium", Back: "back"}
+    options = {}
+    available_items.each do |item|
+      options[item.material] ? next : options[item.material.to_s.capitalize] = item.material
+    end
+
+    material = generate_menu message: "Material Type:", options: options
 
     item_type if material == "back"
     selected_item = Item.find_by(material: material, item_type: choice)
@@ -469,6 +536,7 @@ class Hero < ActiveRecord::Base
     if item.price > self.money
       puts `clear`
       puts "Sorry, you can't afford this."
+      sleep 2
       puts "You need #{item.price - self.money} more gold dragons in order to purchase this #{item.name}."
 
     elsif !available_items.include?(item)
@@ -485,7 +553,7 @@ class Hero < ActiveRecord::Base
       self.save
       puts `clear`
       puts "#{item.name} was added to your inventory."
-      sleep(1)
+      sleep(2)
     end
   end
 
@@ -504,7 +572,7 @@ class Hero < ActiveRecord::Base
     puts `clear`
 
     puts "You have sold 1 #{item.name} for #{sell_value} gold dragons."
-    sleep(1)
+    sleep(2)
   end
 
   def view_inventory_for_selling
